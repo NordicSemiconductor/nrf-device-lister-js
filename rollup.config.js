@@ -9,7 +9,7 @@ export default [
             { file: pkg.main, format: 'cjs', sourcemap: true },
 //             { file: pkg.module, format: 'es', sourcemap: true }
         ],
-        external: ['events', 'debug', 'usb', 'serialport', 'pc-nrf-jprog-js'],
+        external: ['events', 'debug', 'usb', 'serialport', 'pc-nrfjprog-js'],
         plugins: [
             buble({}),
         ]

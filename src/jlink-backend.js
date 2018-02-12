@@ -41,7 +41,7 @@ export default function reenumerateJlinks() {
         debug('Enumerated:', serialnumber);
         return {
             error: undefined,
-            serialNumber: serialNumber,
+            serialNumber: serialnumber,
             jlink: true
         }
     })).catch(err=>{

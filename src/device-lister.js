@@ -14,7 +14,7 @@ export default class DeviceLister extends EventEmitter {
 
         debug('Instantiating DeviceLister with capabilities:', capabilities);
 
-        this._currentDevices = {};
+        this._currentDevices = new Map();
 
         this._backends = [];
 
@@ -32,7 +32,6 @@ export default class DeviceLister extends EventEmitter {
         Usb.on('detach', this._boundReenumerate );
     }
 
-
     get devices(){
         return Object.this._currentDevices;
     }
@@ -43,22 +42,70 @@ export default class DeviceLister extends EventEmitter {
 
         debug('Asking all backends to reenumerate');
 
-        Promise.all(
-            this._backends.map((backend)=>backend())
-        ).then((stuff)=>{
-            this._conflate(stuff);
-        }).catch(err=>this.emit('error', err));
+        let pendings = this._backends.map((backend)=>backend());
 
+        Promise.all(pendings
+
+        ).then((backendsResult)=>{
+//             debug('TODO: Should conflate: ', stuff);
+
+            this._conflate(backendsResult);
+        }).catch((err)=>{
+            debug('Error after reenumerating: ', err);
+            this.emit('error', err);
+        });
+
+        return pendings;
     }
 
-    _conflate(stuff){
+    _conflate(backendsResult){
 
 //         console.log(stuff);
         debug('TODO: should conflate');
 
+        const deviceMap = new Map();
+
+        for (let i in backendsResult) {
+            const results = backendsResult[i];
+            for (let j in results) {
+                const capability = results[j];
+//                 debug(capability);
+
+                let serialNumber = capability.serialNumber;
+                if (serialNumber) {
+                    // If the serial number is fully numeric (not a hex string),
+                    // cast it into an integer
+                    if (Number(serialNumber)) {
+                        serialNumber = Number(serialNumber);
+                    }
+
+//                     debug(i, j, capability);
+//                     debug('serialnumber', serialNumber );
+
+                    let device = deviceMap.get(serialNumber) || {};
+                    device = Object.assign({}, device, capability);
+                    deviceMap.set(serialNumber, device);
+                } else {
+                    debug(i, j, 'error');
+//                     debug('conflateerror', capability);
+                    this.emit('conflateerror', capability);
+                }
+
+            }
+        }
+
         // TODO: emit 'conflateerror' for entries without a serial number,
         // or otherwise fishy entries
         // TODO: save conflated list in this._currentDevices
+        this._currentDevices = deviceMap;
+
+
+//         debug('conflated', deviceMap);
+        deviceMap.forEach((device, serialNumber)=> {
+            const keys = Object.keys(device).filter( key=> key!=='error' && key !== 'serialNumber');
+            debug(serialNumber, keys);
+        });
+
     }
 
 

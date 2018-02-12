@@ -38,49 +38,62 @@ export default function reenumerateUsb() {
     debug('Reenumerating...');
     const usbDevices = Usb.getDeviceList();
 
-    return Promise.all(
-        usbDevices.map(usbDevice=>{
+    return Promise.all(usbDevices.map(usbDevice=>{
 
-            const result = {
-                error: undefined,
+        const result = {
+            error: undefined,
+            serialNumber: undefined,
+            usb: {
                 serialNumber: undefined,
-                usb: {
-                    serialNumber: undefined,
-                    manufacturer: undefined,
-                    product: undefined,
-                    device: usbDevice
-                }
-            };
+                manufacturer: undefined,
+                product: undefined,
+                device: usbDevice
+            }
+        };
 
-            return new Promise((res, rej)=>{
+        debug( usbDevice.busNumber + '.' + usbDevice.deviceAddress );
+
+        return new Promise((res, rej)=>{
+            try {
                 usbDevice.open();
-            }).then(()=>Promise.all([
+            } catch(ex) {
+                return rej(ex);
+            }
+            return res();
+        }).then((ex)=>{
+            debug('Opened:', usbDevice.busNumber + '.' + usbDevice.deviceAddress);
+
+            return Promise.all([
                 getStr(usbDevice, usbDevice.deviceDescriptor.iSerialNumber),
                 getStr(usbDevice, usbDevice.deviceDescriptor.iManufacturer),
                 getStr(usbDevice, usbDevice.deviceDescriptor.iProduct)
-            ])).then(([serialNumber, manufacturer, product])=>{
-                debug('Enumerated:', usbDevice.busNumber + '.' + usbDevice.deviceAddress, [serialNumber, manufacturer, product]);
+            ])
+        }).then(([serialNumber, manufacturer, product])=>{
+            debug('Enumerated:', usbDevice.busNumber + '.' + usbDevice.deviceAddress, [serialNumber, manufacturer, product]);
+            usbDevice.close();
+
+            result.serialNumber = serialNumber;
+            result.usb.serialNumber = serialNumber;
+            result.usb.manufacturer = manufacturer;
+            result.usb.product = product;
+            return result;
+        }).catch(ex=>{
+            debug('Error!', usbDevice.busNumber + '.' + usbDevice.deviceAddress, ex.message);
+
+            result.error = ex;
+        }).then(()=>{
+            // Clean up
+            try {
                 usbDevice.close();
+            } catch(ex) {
+                debug('Error!', usbDevice.busNumber + '.' + usbDevice.deviceAddress,    ex.message);
+            }
+        }).then(()=>{
+            return result;
+        });
 
-                result.serialNumber = serialNumber;
-                result.usb.serialNumber = serialNumber;
-                result.usb.manufacturer = manufacturer;
-                result.usb.product = product;
+    }));
 
-            }).catch(ex=>{
-                try {
-                    // Try to clean up, just in case
-                    usbDevice.close();
-                } catch(ex2) {}
-
-                debug('Error!', usbDevice.busNumber + '.' + usbDevice.deviceAddress, ex.message);
-
-                result.error = ex;
-                return result;
-            });
-
-        })
-    );
 }
 
 
