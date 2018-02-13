@@ -1,10 +1,11 @@
 
 import EventEmitter from 'events';
 import Usb from 'usb';
+import Debug from 'debug';
+
 import reenumerateUsb from './usb-backend';
 import reenumerateSerialPort from './serialport-backend';
 import reenumerateJlink from './jlink-backend';
-import Debug from 'debug';
 
 const debug = Debug('device-lister:conflater');
 
@@ -44,7 +45,7 @@ export default class DeviceLister extends EventEmitter {
         Usb.removeListener('detach', this._boundReenumerate);
     }
 
-    get devices() {
+    static get devices() {
         return Object.this._currentDevices;
     }
 
@@ -73,19 +74,16 @@ export default class DeviceLister extends EventEmitter {
 
         const deviceMap = new Map();
 
-        for (const i in backendsResult) {
-            const results = backendsResult[i];
-            for (const j in results) {
-                const capability = results[j];
-
-                let serialNumber = capability.serialNumber;
+        backendsResult.forEach(results => {
+            results.forEach(capability => {
+                let { serialNumber } = capability;
                 if (capability.error) {
-                    const key = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-                    debug(key, 'error', capability.error.message);
+                    const capName = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
+                    debug(capName, 'error', capability.error.message);
                     this.emit('error', capability);
                 } else if (!serialNumber) {
-                    const key = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-                    debug(key, 'no serial number');
+                    const capName = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
+                    debug(capName, 'no serial number');
                     this.emit('noserialnumber', capability);
                 } else {
                     // If the serial number is fully numeric (not a hex string),
@@ -98,12 +96,11 @@ export default class DeviceLister extends EventEmitter {
                     device = Object.assign({}, device, capability);
                     deviceMap.set(serialNumber, device);
                 }
-            }
-        }
+            });
+        });
 
         debug('Conflated.');
         this._currentDevices = deviceMap;
         this.emit('conflated', deviceMap);
-
     }
 }

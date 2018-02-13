@@ -16,7 +16,7 @@ function getStr(device, index) {
 
 // Aux function to prettify USB vendor/product IDs
 function hexpad4(number) {
-    return '0x' + number.toString(16).padStart(4, '0');
+    return `0x${number.toString(16).padStart(4, '0')}`;
 }
 
 /* Returns a Promise to a list of objects, like:
@@ -54,9 +54,11 @@ export default function reenumerateUsb() {
             },
         };
 
-        const {busNumber, deviceAddress, deviceDescriptor} = usbDevice;
-        const {iSerialNumber, iManufacturer, iProduct, idVendor, idProduct} = deviceDescriptor;
-        const debugIdStr = `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`
+        const { busNumber, deviceAddress, deviceDescriptor } = usbDevice;
+        const {
+            iSerialNumber, iManufacturer, iProduct, idVendor, idProduct,
+        } = deviceDescriptor;
+        const debugIdStr = `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`;
 
         return new Promise((res, rej) => {
             try {
@@ -65,7 +67,7 @@ export default function reenumerateUsb() {
                 return rej(ex);
             }
             return res();
-        }).then(ex => {
+        }).then(() => {
             debug(`Opened: ${debugIdStr}`);
 
             return Promise.all([
