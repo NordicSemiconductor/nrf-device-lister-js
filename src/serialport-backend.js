@@ -1,6 +1,6 @@
 
 import SerialPort from 'serialport';
-import Debug from 'debug'
+import Debug from 'debug';
 
 const debug = Debug('device-lister:serialport');
 
@@ -36,26 +36,25 @@ const debug = Debug('device-lister:serialport');
 
 export default function reenumerateSerialPort() {
     debug('Reenumerating...');
-    return new Promise((res, rej)=>{
-        SerialPort.list((err, portsMetadata)=>{
-            if (err) {rej(err);} else {res(portsMetadata);}
+    return new Promise((res, rej) => {
+        SerialPort.list((err, portsMetadata) => {
+            if (err) { rej(err); } else { res(portsMetadata); }
         });
-    }).then((portsMetadata)=>portsMetadata.map(portMetadata=>{
-
+    }).then(portsMetadata => portsMetadata.map(portMetadata => {
         debug('Enumerated: ', portMetadata.comName, portMetadata.serialNumber);
 
         return {
             error: undefined,
             serialNumber: portMetadata.serialNumber,
-            serialport: portMetadata
-        }
-    })).catch(err=>{
+            serialport: portMetadata,
+        };
+    })).catch(err => {
         debug('Error! ', err);
 
         return [{
             error: err,
             serialNumber: undefined,
-            serialport: undefined
+            serialport: undefined,
         }];
     });
 }

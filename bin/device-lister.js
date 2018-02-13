@@ -28,8 +28,46 @@ const lister = new DeviceLister({
 
 // lister.on('')
 
-lister.on('error', (err)=>console.error());
+// Aux function to prettify USB vendor/product IDs
+function hexpad4(number) {
+    return '0x' + number.toString(16).padStart(4, '0');
+}
 
+lister.on('error', (capability)=>{
+    const key = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
+    if (key === 'usb') {
+        const { idVendor, idProduct } = capability.usb.device.deviceDescriptor;
+        console.error('usb error when enumerating USB device with VID/PID',
+                      hexpad4(idVendor), '/',  hexpad4(idProduct),
+                      ':', capability.error.message);
+    } else if (key === 'jlink') {
+        console.error('jprog/jlink error: ', capability.error);
+    } else {
+        console.error(key, 'error', capability.error.message);
+    }
+});
+lister.on('noserialnumber', (capability)=>{
+    const key = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
+
+    if (key === 'serialport' ) {
+        console.error('no serial number for serial port', capability.serialport.comName);
+    } else {
+        console.error('noserialnumber', capability);
+    }
+});
+
+lister.on('conflated', deviceMap=>{
+    // Pretty-print some info
+    console.log('Received update:');
+    deviceMap.forEach((device, serialNumber) => {
+        const keys = Object.keys(device).filter(key => key !== 'error' && key !== 'serialNumber');
+        console.log(serialNumber, keys);
+    });
+    console.log();
+});
+
+
+lister.start();
 
 if (!args.watch) {
     // Kinda counter-intuitive: the default for the library is to keep running
