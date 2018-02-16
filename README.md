@@ -27,6 +27,8 @@ var DeviceLister = require('nrf-device-lister');
 // as booleans.
 var lister = new DeviceLister({
     usb: true,
+    nordicUsb: false,   // Like 'usb', but filters by VendorId
+    seggerUsb: false,   // Like 'usb', but filters by VendorId
     serialport: true,
     jlink: true,
 });

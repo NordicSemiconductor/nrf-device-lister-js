@@ -9,7 +9,7 @@
   "private": true,
   "bin": {
     "nrf-device-lister": "./bin/device-lister.js"
-    },
+  },
   "scripts": {
     "rollup": "rollup -c rollup.config.js",
     "lint": "eslint src/",

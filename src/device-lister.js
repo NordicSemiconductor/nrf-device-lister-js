@@ -3,7 +3,7 @@ import EventEmitter from 'events';
 import Usb from 'usb';
 import Debug from 'debug';
 
-import reenumerateUsb from './usb-backend';
+import { reenumerateUsb, reenumerateSeggerUsb, reenumerateNordicUsb } from './usb-backend';
 import reenumerateSerialPort from './serialport-backend';
 import reenumerateJlink from './jlink-backend';
 
@@ -19,9 +19,11 @@ export default class DeviceLister extends EventEmitter {
 
         this._backends = [];
 
-        const { usb, jlink, serialport } = capabilities;
+        const { usb, nordicUsb, seggerUsb, jlink, serialport } = capabilities;
 
         if (usb) { this._backends.push(reenumerateUsb); }
+        if (nordicUsb) { this._backends.push(reenumerateNordicUsb); }
+        if (seggerUsb) { this._backends.push(reenumerateSeggerUsb); }
         if (serialport) { this._backends.push(reenumerateSerialPort); }
         if (jlink) { this._backends.push(reenumerateJlink); }
 
