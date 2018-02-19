@@ -65,9 +65,9 @@ function normalizeUsbDevice(usbDevice) {
         debug(`Opened: ${debugIdStr}`);
 
         return Promise.all([
-        getStr(usbDevice, iSerialNumber),
-                           getStr(usbDevice, iManufacturer),
-                           getStr(usbDevice, iProduct),
+            getStr(usbDevice, iSerialNumber),
+            getStr(usbDevice, iManufacturer),
+            getStr(usbDevice, iProduct),
         ]);
     }).then(([serialNumber, manufacturer, product]) => {
         debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
@@ -83,15 +83,15 @@ function normalizeUsbDevice(usbDevice) {
 
         result.error = ex;
     })
-    .then(() => {
+        .then(() => {
         // Clean up
-        try {
-            usbDevice.close();
-        } catch (ex) {
-            debug(`Error! ${debugIdStr}`, ex.message);
-        }
-    })
-    .then(() => result);
+            try {
+                usbDevice.close();
+            } catch (ex) {
+                debug(`Error! ${debugIdStr}`, ex.message);
+            }
+        })
+        .then(() => result);
 }
 
 /* Returns a Promise to a list of objects, like:
@@ -123,9 +123,8 @@ export function reenumerateUsb() {
 // Like reenumerateUsb, but cares only about USB devices with the Segger VendorId (0x1366)
 export function reenumerateSeggerUsb() {
     debug('Reenumerating all Segger USB devices...');
-    const usbDevices = Usb.getDeviceList().filter((device)=>
-        device.deviceDescriptor.idVendor === 0x1366
-    );
+    const usbDevices = Usb.getDeviceList().filter(device =>
+        device.deviceDescriptor.idVendor === 0x1366);
 
     return Promise.all(usbDevices.map(normalizeUsbDevice));
 }
@@ -133,9 +132,8 @@ export function reenumerateSeggerUsb() {
 // Like reenumerateUsb, but cares only about USB devices with the Nordic VendorId (0x1915)
 export function reenumerateNordicUsb() {
     debug('Reenumerating all Nordic USB devices...');
-    const usbDevices = Usb.getDeviceList().filter((device)=>
-        device.deviceDescriptor.idVendor === 0x1915
-    );
+    const usbDevices = Usb.getDeviceList().filter(device =>
+        device.deviceDescriptor.idVendor === 0x1915);
 
     return Promise.all(usbDevices.map(normalizeUsbDevice));
 }

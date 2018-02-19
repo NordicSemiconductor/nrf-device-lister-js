@@ -19,7 +19,9 @@ export default class DeviceLister extends EventEmitter {
 
         this._backends = [];
 
-        const { usb, nordicUsb, seggerUsb, jlink, serialport } = capabilities;
+        const {
+            usb, nordicUsb, seggerUsb, jlink, serialport,
+        } = capabilities;
 
         if (usb) { this._backends.push(reenumerateUsb); }
         if (nordicUsb) { this._backends.push(reenumerateNordicUsb); }
