@@ -6,10 +6,13 @@ List USB/serialport/jlink devices based on capabilities and conflate them by ser
 This is part of [Nordic Semiconductor](http://www.nordicsemi.com/)'s javascript tools to
 interface with nRF SoCs and development kits.
 
+## Building prerequisites
+
+Node.js 8 or newer
 
 ## Usage as a command
 
-Do a `npm install nrf-intel-hex` or `yarn add nrf-intel-hex`, then run in a console:
+Do a `npm install nrf-device-lister-js` or `yarn add nrf-device-lister-js`, then run in a console:
 
 `node node_modules/.bin/nrf-device-lister --help`
 
