@@ -37,6 +37,10 @@ const debug = Debug('device-lister:usb');
 const SEGGER_VENDOR_ID = 0x1366;
 const NORDIC_VENDOR_ID = 0x1915;
 
+// A Set of USB bus/address to *not* throw errors to. This is used to
+// throw only one error per device on consecutive enumerations.
+let suppressErrorAddresses = new Set();
+
 // Aux shorthand function. Given an instance of Usb's Device (should be open already) and
 // a string descriptor index, returns a Promise to a String.
 function getStr(device, index) {
@@ -131,6 +135,20 @@ function normalizeUsbDevice(usbDevice) {
         .then(() => result);
 }
 
+// Emits errors, but only if that device did not generate an error in the
+// previous reenumeration.
+// Returns an Array of USB devices, except those with errors that were already
+// included in a previous reenumeration.
+function filterErrors(devices) {
+    const filteredDevices = devices.filter(device => {
+        const key = `${device.usb.device.busNumber}.${device.usb.device.deviceAddress}`;
+        return (!(device.error && suppressErrorAddresses.has(key)));
+    });
+
+    suppressErrorAddresses = new Set(devices.map(device => `${device.usb.device.busNumber}.${device.usb.device.deviceAddress}`));
+    return filteredDevices;
+}
+
 /* Returns a Promise to a list of objects, like:
  *
  * [{
@@ -154,7 +172,7 @@ export function reenumerateUsb() {
     debug('Reenumerating all USB devices...');
     const usbDevices = Usb.getDeviceList();
 
-    return Promise.all(usbDevices.map(normalizeUsbDevice));
+    return Promise.all(usbDevices.map(normalizeUsbDevice)).then(filterErrors);
 }
 
 // Like reenumerateUsb, but cares only about USB devices with the Segger VendorId (0x1366)
@@ -163,7 +181,7 @@ export function reenumerateSeggerUsb() {
     const usbDevices = Usb.getDeviceList().filter(device =>
         device.deviceDescriptor.idVendor === SEGGER_VENDOR_ID);
 
-    return Promise.all(usbDevices.map(normalizeUsbDevice));
+    return Promise.all(usbDevices.map(normalizeUsbDevice)).then(filterErrors);
 }
 
 // Like reenumerateUsb, but cares only about USB devices with the Nordic VendorId (0x1915)
@@ -172,5 +190,5 @@ export function reenumerateNordicUsb() {
     const usbDevices = Usb.getDeviceList().filter(device =>
         device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID);
 
-    return Promise.all(usbDevices.map(normalizeUsbDevice));
+    return Promise.all(usbDevices.map(normalizeUsbDevice)).then(filterErrors);
 }
