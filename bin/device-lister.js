@@ -31,6 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* eslint comma-dangle: ["error", {"objects": "always-multiline", "functions": "ignore"}] */
+
 'use strict';
 
 const DeviceLister = require('../');

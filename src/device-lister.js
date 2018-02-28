@@ -39,34 +39,45 @@ import reenumerateJlink from './jlink-backend';
 
 const debug = Debug('device-lister:conflater');
 
+// private members also to avoid underscores as suggested by:
+// https://medium.com/@davidrhyswhite/private-members-in-es6-db1ccd6128a5
+
+const detachPrv = Symbol('detach');
+const conflatePrv = Symbol('conflate');
+const currentDevicesPrv = Symbol('currentDevices');
+const backendsPrv = Symbol('backends');
+const supressedDevicesPrv = Symbol('supressedDevices');
+
 export default class DeviceLister extends EventEmitter {
     constructor(capabilities = {}) {
         super();
 
         debug('Instantiating DeviceLister with capabilities:', capabilities);
 
-        this._currentDevices = new Map();
+        this[currentDevicesPrv] = new Map();
+        this[supressedDevicesPrv] = new Set();
 
-        this._backends = [];
+        this[backendsPrv] = [];
 
         const {
             usb, nordicUsb, seggerUsb, jlink, serialport,
         } = capabilities;
 
-        if (usb) { this._backends.push(reenumerateUsb); }
-        if (nordicUsb) { this._backends.push(reenumerateNordicUsb); }
-        if (seggerUsb) { this._backends.push(reenumerateSeggerUsb); }
-        if (serialport) { this._backends.push(reenumerateSerialPort); }
-        if (jlink) { this._backends.push(reenumerateJlink); }
+        if (usb) { this[backendsPrv].push(reenumerateUsb); }
+        if (nordicUsb) { this[backendsPrv].push(reenumerateNordicUsb); }
+        if (seggerUsb) { this[backendsPrv].push(reenumerateSeggerUsb); }
+        if (serialport) { this[backendsPrv].push(reenumerateSerialPort); }
+        if (jlink) { this[backendsPrv].push(reenumerateJlink); }
 
-        this._boundReenumerate = this.reenumerate.bind(this);
+        this.reenumerate = this.reenumerate.bind(this);
+        this[detachPrv] = this[detachPrv].bind(this);
     }
 
     start() {
         debug('Attaching event listeners for USB attach/detach');
 
-        Usb.on('attach', this._boundReenumerate);
-        Usb.on('detach', this._boundReenumerate);
+        Usb.on('attach', this.reenumerate);
+        Usb.on('detach', this[detachPrv]);
         this.reenumerate();
     }
 
@@ -75,12 +86,12 @@ export default class DeviceLister extends EventEmitter {
     stop() {
         debug('Removing event listeners for USB attach/detach');
 
-        Usb.removeListener('attach', this._boundReenumerate);
-        Usb.removeListener('detach', this._boundReenumerate);
+        Usb.removeListener('attach', this.reenumerate);
+        Usb.removeListener('detach', this[detachPrv]);
     }
 
     static get devices() {
-        return Object.this._currentDevices;
+        return Object.this[currentDevicesPrv];
     }
 
     reenumerate() {
@@ -89,12 +100,12 @@ export default class DeviceLister extends EventEmitter {
 
         debug('Asking all backends to reenumerate');
 
-        const pendings = this._backends.map(backend => backend());
+        const pendings = this[backendsPrv].map(backend => backend());
 
         Promise.all(pendings).then(backendsResult => {
             //             debug('TODO: Should conflate: ', stuff);
 
-            this._conflate(backendsResult);
+            this[conflatePrv](backendsResult);
         }).catch(err => {
             debug('Error after reenumerating: ', err);
             this.emit('error', err);
@@ -103,7 +114,15 @@ export default class DeviceLister extends EventEmitter {
         return pendings;
     }
 
-    _conflate(backendsResult) {
+    [detachPrv](detachedDevice) {
+        const addr = `${detachedDevice.busNumber}.${detachedDevice.deviceAddress}`;
+        debug('Detached usb device', addr);
+        this[supressedDevicesPrv].delete(addr);
+
+        this.reenumerate();
+    }
+
+    [conflatePrv](backendsResult) {
         debug('All backends have re-enumerated, conflating...');
 
         const deviceMap = new Map();
@@ -112,6 +131,16 @@ export default class DeviceLister extends EventEmitter {
             results.forEach(capability => {
                 let { serialNumber } = capability;
                 if (capability.error) {
+                    if (capability.usb) {
+                        const { device } = capability.usb;
+                        const addr = `${device.busNumber}.${device.deviceAddress}`;
+                        if (this[supressedDevicesPrv].has(addr)) {
+                            // this device has already reported errors
+                            debug('Usb device', addr, 'has already reported errors, skipping');
+                            return;
+                        }
+                        this[supressedDevicesPrv].add(addr);
+                    }
                     const capName = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
                     debug(capName, 'error', capability.error.message);
                     this.emit('error', capability);
@@ -134,7 +163,7 @@ export default class DeviceLister extends EventEmitter {
         });
 
         debug('Conflated.');
-        this._currentDevices = deviceMap;
+        this[currentDevicesPrv] = deviceMap;
         this.emit('conflated', deviceMap);
     }
 }
