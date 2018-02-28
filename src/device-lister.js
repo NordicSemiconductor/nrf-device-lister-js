@@ -39,6 +39,9 @@ import reenumerateJlink from './jlink-backend';
 
 const debug = Debug('device-lister:conflater');
 
+// private members also to avoid underscores as suggested by:
+// https://medium.com/@davidrhyswhite/private-members-in-es6-db1ccd6128a5
+
 const detachPrv = Symbol('detach');
 const conflatePrv = Symbol('conflate');
 const currentDevicesPrv = Symbol('currentDevices');
@@ -115,20 +118,8 @@ export default class DeviceLister extends EventEmitter {
         const addr = `${detachedDevice.busNumber}.${detachedDevice.deviceAddress}`;
         debug('Detached usb device', addr);
         this[supressedDevicesPrv].delete(addr);
-        let key;
-        this[currentDevicesPrv].forEach((device, serialNumber) => {
-            if (device.usb && device.usb.device &&
-                device.usb.device.busNumber === detachedDevice.busNumber &&
-                device.usb.device.deviceAddress === detachedDevice.deviceAddress
-            ) {
-                key = serialNumber;
-            }
-        });
-        if (key) {
-            debug('Found', key, 'removing from current device list');
-            this[currentDevicesPrv].delete(key);
-            this.emit('conflated', this[currentDevicesPrv]);
-        }
+
+        this.reenumerate();
     }
 
     [conflatePrv](backendsResult) {
