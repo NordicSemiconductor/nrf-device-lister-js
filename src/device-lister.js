@@ -117,9 +117,9 @@ export default class DeviceLister extends EventEmitter {
         this[supressedDevicesPrv].delete(addr);
         let key;
         this[currentDevicesPrv].forEach((device, serialNumber) => {
-            if (device.usb &&
-                device.usb.busNumber === detachedDevice.busNumber &&
-                device.usb.deviceAddress === detachedDevice.deviceAddress
+            if (device.usb && device.usb.device &&
+                device.usb.device.busNumber === detachedDevice.busNumber &&
+                device.usb.device.deviceAddress === detachedDevice.deviceAddress
             ) {
                 key = serialNumber;
             }
