@@ -40,8 +40,8 @@ var lister = new DeviceLister({
 // When started, the lister will emit three kinds of events:
 
 // The 'conflated' event fires whenever there is a new conflated list of
-// devices. This list is an instance of Map, with the serial number of
-// each device as the keys.
+// devices (i.e. after each reenumeration). This list is an instance of Map,
+// with the serial number of each device as the keys.
 // Each device has information of their (usb, jlink, serialport) capabilities.
 // USB devices have a minimal data structure containing a Device instance,
 // as per the 'usb' module. Serial port devices have the metadata structure
@@ -76,6 +76,8 @@ lister.on('conflated', function(deviceMap){
 // The recommendation is to raise all errors related to devices with the 'jlink'
 // capability, and devices with the 'usb' capability only if their Product ID/Vendor ID
 // (as listed in the usb Device) are of interest to your application.
+// Errors that happen on consecutive enumerations are throttled down: only
+// the first one is emmited.
 lister.on('error', function(device){
     // the only parameter is a non-conflated device.
     // It will look like:
@@ -102,6 +104,8 @@ lister.on('error', function(device){
 // but it reported no serial number. This usually happens with on-board
 // serial ports (which are not USB devices and therefore do not report
 // any serial numbers)
+// 'noserialnumber' events that happen on consecutive enumerations are throttled down: only
+// the first one is emmited.
 lister.on('noserialnumber', function(device){
     // the only parameter is a non-conflated device.
     // It will look like:
