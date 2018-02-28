@@ -79,7 +79,7 @@ lister.on('error', capability => {
         console.error(
             'usb error when enumerating USB device with VID/PID',
             hexpad4(idVendor), '/', hexpad4(idProduct),
-            ':', capability.error.message
+            ':', capability.error.message,
         );
     } else if (filteredKey === 'jlink') {
         console.error('jprog/jlink error: ', capability.error);
