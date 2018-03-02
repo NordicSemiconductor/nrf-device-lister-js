@@ -46,6 +46,7 @@ export default class DeviceLister extends EventEmitter {
         debug('Instantiating DeviceLister with capabilities:', capabilities);
 
         this._currentDevices = new Map();
+        this._currentErrors = new Set();
 
         this._backends = [];
 
@@ -107,18 +108,25 @@ export default class DeviceLister extends EventEmitter {
         debug('All backends have re-enumerated, conflating...');
 
         const deviceMap = new Map();
+        const newErrors = new Set();
 
         backendsResult.forEach(results => {
             results.forEach(capability => {
                 let { serialNumber } = capability;
-                if (capability.error) {
-                    const capName = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-                    debug(capName, 'error', capability.error.message);
-                    this.emit('error', capability);
-                } else if (!serialNumber) {
-                    const capName = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-                    debug(capName, 'no serial number');
-                    this.emit('noserialnumber', capability);
+                if (capability.error || (!serialNumber)) {
+                    const hash = JSON.stringify(capability);
+                    if (!this._currentErrors.has(hash)) {
+                        const capName = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
+                        if (capability.error) {
+                            debug(capName, 'error', capability.error.message);
+                            this.emit('error', capability);
+                        } else {
+                            debug(capName, 'no serial number');
+                            this.emit('noserialnumber', capability);
+                        }
+                    }
+
+                    newErrors.add(hash);
                 } else {
                     // If the serial number is fully numeric (not a hex string),
                     // cast it into an integer
@@ -133,7 +141,9 @@ export default class DeviceLister extends EventEmitter {
             });
         });
 
-        debug('Conflated.');
+        this._currentErrors = newErrors;
+
+        debug(`Conflated. Now ${Array.from(deviceMap).length} devices with known serial number and ${Array.from(this._currentErrors).length} without.`);
         this._currentDevices = deviceMap;
         this.emit('conflated', deviceMap);
     }
