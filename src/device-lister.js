@@ -114,8 +114,8 @@ export default class DeviceLister extends EventEmitter {
             results.forEach(capability => {
                 let { serialNumber } = capability;
                 if (capability.error || (!serialNumber)) {
-                    const key = JSON.stringify(capability);
-                    if (!this._currentErrors.has(key)) {
+                    const hash = JSON.stringify(capability);
+                    if (!this._currentErrors.has(hash)) {
                         const capName = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
                         if (capability.error) {
                             debug(capName, 'error', capability.error.message);
@@ -126,7 +126,7 @@ export default class DeviceLister extends EventEmitter {
                         }
                     }
 
-                    newErrors.add(key);
+                    newErrors.add(hash);
                 } else {
                     // If the serial number is fully numeric (not a hex string),
                     // cast it into an integer
