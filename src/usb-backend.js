@@ -32,6 +32,15 @@
 import Usb from 'usb';
 import Debug from 'debug';
 
+import {Mutex} from 'await-semaphore';
+
+
+// Module-wide mutex. Not the most efficient (prevents querying several USB devices
+// at once) but should do the trick. TODO: Replace this with a Map of mutexes
+// keyed by USB bus / USB address.
+const mutex = new Mutex();
+
+
 const debug = Debug('device-lister:usb');
 
 const SEGGER_VENDOR_ID = 0x1366;
@@ -91,44 +100,47 @@ function normalizeUsbDevice(usbDevice) {
     } = deviceDescriptor;
     const debugIdStr = `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`;
 
-    return new Promise((res, rej) => {
-        try {
-            usbDevice.open();
-        } catch (ex) {
-            return rej(ex);
-        }
-        return res();
-    }).then(() => {
-        debug(`Opened: ${debugIdStr}`);
+    return mutex.use(()=>{
+        debug('Mutex grabbed.');
+        return new Promise((res, rej) => {
+            try {
+                usbDevice.open();
+            } catch (ex) {
+                return rej(ex);
+            }
+            return res();
+        }).then(() => {
+            debug(`Opened: ${debugIdStr}`);
 
-        return Promise.all([
-            getStr(usbDevice, iSerialNumber),
-            getStr(usbDevice, iManufacturer),
-            getStr(usbDevice, iProduct),
-        ]);
-    }).then(([serialNumber, manufacturer, product]) => {
-        debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
-        usbDevice.close();
+            return Promise.all([
+                getStr(usbDevice, iSerialNumber),
+                getStr(usbDevice, iManufacturer),
+                getStr(usbDevice, iProduct),
+            ]);
+        }).then(([serialNumber, manufacturer, product]) => {
+            debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
+            usbDevice.close();
 
-        result.serialNumber = serialNumber;
-        result.usb.serialNumber = serialNumber;
-        result.usb.manufacturer = manufacturer;
-        result.usb.product = product;
-        return result;
-    }).catch(ex => {
-        debug(`Error! ${debugIdStr}`, ex.message);
+            result.serialNumber = serialNumber;
+            result.usb.serialNumber = serialNumber;
+            result.usb.manufacturer = manufacturer;
+            result.usb.product = product;
+            return result;
+        }).catch(ex => {
+            debug(`Error! ${debugIdStr}`, ex.message);
 
-        result.error = ex;
-    })
-        .then(() => {
-        // Clean up
+            result.error = ex;
+        }).then(() => {
+            // Clean up
             try {
                 usbDevice.close();
             } catch (ex) {
                 debug(`Error! ${debugIdStr}`, ex.message);
             }
         })
+        .then(() => debug('Releasing mutex.'))
         .then(() => result);
+    });
 }
 
 /* Returns a Promise to a list of objects, like:

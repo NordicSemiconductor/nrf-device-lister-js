@@ -11,7 +11,7 @@ export default [
         ],
         external: ['events', 'debug', 'usb', 'serialport', 'pc-nrfjprog-js'],
         plugins: [
-            buble({}),
+            buble(),
         ]
     }
 ];
