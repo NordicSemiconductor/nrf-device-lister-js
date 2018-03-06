@@ -51,11 +51,45 @@ function getStr(device, index) {
     });
 }
 
+/*
+ * Returns a promise resolved to boolean for a Nordic device
+ * indicating presence of DFU trigger interface,
+ * otherwise resolves to undefined
+ */
+function findDFUTriggerInterface(device) {
+    if (device.deviceDescriptor.idVendor !== NORDIC_VENDOR_ID) {
+        return Promise.resolve();
+    }
+    return new Promise(resolve => {
+        const dfuTriggerInterface = device.interfaces.findIndex(iface => (
+            iface.descriptor.bInterfaceClass === 255 &&
+            iface.descriptor.bInterfaceSubClass === 1 &&
+            iface.descriptor.bInterfaceProtocol === 1
+        ));
+        if (dfuTriggerInterface > -1) {
+            debug('found dfu trigger interface', dfuTriggerInterface);
+            resolve(true);
+        } else {
+            resolve(false);
+        }
+    });
+}
+
 // Aux function to prettify USB vendor/product IDs
 function hexpad4(number) {
     return `0x${number.toString(16).padStart(4, '0')}`;
 }
 
+/*
+ * Returns an array of results of an array of promises resolved sequentially
+ */
+function promiseSerial(funcs) {
+    return funcs.reduce((promise, func) => (
+        promise.then(result => (
+            func().then(Array.prototype.concat.bind(result))
+        ))
+    ), Promise.resolve([]));
+}
 
 /*
  * Given an instance of a USB device, returns *one* structure like:
@@ -101,12 +135,13 @@ function normalizeUsbDevice(usbDevice) {
     }).then(() => {
         debug(`Opened: ${debugIdStr}`);
 
-        return Promise.all([
-            getStr(usbDevice, iSerialNumber),
-            getStr(usbDevice, iManufacturer),
-            getStr(usbDevice, iProduct),
+        return promiseSerial([
+            getStr.bind(null, usbDevice, iSerialNumber),
+            getStr.bind(null, usbDevice, iManufacturer),
+            getStr.bind(null, usbDevice, iProduct),
+            findDFUTriggerInterface.bind(null, usbDevice),
         ]);
-    }).then(([serialNumber, manufacturer, product]) => {
+    }).then(([serialNumber, manufacturer, product, dfuTrigger]) => {
         debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
         usbDevice.close();
 
@@ -114,6 +149,9 @@ function normalizeUsbDevice(usbDevice) {
         result.usb.serialNumber = serialNumber;
         result.usb.manufacturer = manufacturer;
         result.usb.product = product;
+        if (dfuTrigger !== undefined) {
+            result.usb.dfuTrigger = dfuTrigger;
+        }
         return result;
     }).catch(ex => {
         debug(`Error! ${debugIdStr}`, ex.message);
