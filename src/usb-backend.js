@@ -78,12 +78,12 @@ function hexpad4(number) {
  * If the device didn't pass the `deviceFilter`, the closure function will return
  * undefined instead.
  */
-function normalizeUsbDeviceClosure(deviceFilter, traitName) {
+function normalizeUsbDeviceClosure(deviceFilter) {
     return function normalizeUsbDevice(usbDevice) {
         let result = {
             error: undefined,
             serialNumber: undefined,
-            [traitName]: {
+            usb: {
                 serialNumber: undefined,
                 manufacturer: undefined,
                 product: undefined,
@@ -119,9 +119,9 @@ function normalizeUsbDeviceClosure(deviceFilter, traitName) {
 
             if (filtered) {
                 result.serialNumber = serialNumber;
-                result[traitName].serialNumber = serialNumber;
-                result[traitName].manufacturer = manufacturer;
-                result[traitName].product = product;
+                result.usb.serialNumber = serialNumber;
+                result.usb.manufacturer = manufacturer;
+                result.usb.product = product;
             } else {
                 debug(`Device ${debugIdStr} didn't pass the filter`);
                 result = undefined;
@@ -144,7 +144,7 @@ function normalizeUsbDeviceClosure(deviceFilter, traitName) {
     };
 }
 
-/* Returns a Promise to a list of objects, like:
+/* Returns a closure to a function that returns a Promise to a list of objects, like:
  *
  * [{
  *   error: undefined
@@ -161,54 +161,19 @@ function normalizeUsbDeviceClosure(deviceFilter, traitName) {
  * product fields will be empty, and the error field will contain the error.
  *
  * In any USB backend, errors are per-device.
+ *
+ * The two filter functions will receive as parameters each closed device,
+ * and each opened device that passed the previous filter function, respectively.
  */
-function genericReenumerateUsb(
+export function reenumerateUsb([
     closedDeviceFilter = () => true, // Applies to *closed* instances of usb's Device
     openedDeviceFilter = () => true, // Applies to *opened* instances of usb's Device
-    traitName = 'usb'
-) {
-    const usbDevices = Usb.getDeviceList().filter(closedDeviceFilter);
-    return Promise.all(usbDevices
-        .map(normalizeUsbDeviceClosure(openedDeviceFilter, traitName)))
-        .then(items => items.filter(item => item));
+]) {
+    return function reenumerateUsbFiltered() {
+        const usbDevices = Usb.getDeviceList().filter(closedDeviceFilter);
+        return Promise.all(usbDevices
+            .map(normalizeUsbDeviceClosure(openedDeviceFilter)))
+            .then(items => items.filter(item => item));
+    }
 }
 
-
-export function reenumerateUsb() {
-    debug('Reenumerating all USB devices...');
-    return genericReenumerateUsb(() => true, () => true, 'usb');
-}
-
-
-// Like reenumerateUsb, but cares only about USB devices with the Segger VendorId (0x1366)
-function filterSeggerVendorId(device) {
-    return device.deviceDescriptor.idVendor === SEGGER_VENDOR_ID;
-}
-export function reenumerateSeggerUsb() {
-    debug('Reenumerating all Segger USB devices...');
-    return genericReenumerateUsb(filterSeggerVendorId, () => true, 'usb');
-}
-
-
-// Like reenumerateUsb, but cares only about USB devices with the Nordic VendorId (0x1915)
-function filterNordicVendorId(device) {
-    return device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID;
-}
-export function reenumerateNordicUsb() {
-    debug('Reenumerating all Nordic USB devices...');
-    return genericReenumerateUsb(filterNordicVendorId, () => true, 'usb');
-}
-
-// Like reenumerateUsb, but cares only about USB devices with the Nordic VendorId (0x1915)
-// and a DFU sidechannel trigger interface
-function filterDfuSidechannel(device) {
-    return device.interfaces.some(iface => (
-        iface.descriptor.bInterfaceClass === 255 &&
-            iface.descriptor.bInterfaceSubClass === 1 &&
-            iface.descriptor.bInterfaceProtocol === 1
-    ));
-}
-export function reenumerateNordicDfuSidechannel() {
-    debug('Reenumerating all Nordic USB devices with DFU sidechannel trigger...');
-    return genericReenumerateUsb(filterNordicVendorId, filterDfuSidechannel, 'nordic-dfu-trigger');
-}

@@ -54,10 +54,7 @@ export default class DeviceLister extends EventEmitter {
             usb, nordicUsb, nordicDfu, seggerUsb, jlink, serialport,
         } = capabilities;
 
-        if (usb) { this._backends.push(reenumerateUsb); }
-        if (nordicUsb) { this._backends.push(reenumerateNordicUsb); }
-        if (nordicDfu) { this._backends.push(reenumerateNordicDfuSidechannel); }
-        if (seggerUsb) { this._backends.push(reenumerateSeggerUsb); }
+        if (usb) { this._backends.push(reenumerateUsb(usb)); }
         if (serialport) { this._backends.push(reenumerateSerialPort); }
         if (jlink) { this._backends.push(reenumerateJlink); }
 
