@@ -32,6 +32,7 @@
 import EventEmitter from 'events';
 import Usb from 'usb';
 import Debug from 'debug';
+import { inspect } from 'util';
 
 import { reenumerateUsb, reenumerateSeggerUsb, reenumerateNordicUsb } from './usb-backend';
 import reenumerateSerialPort from './serialport-backend';
@@ -114,7 +115,7 @@ export default class DeviceLister extends EventEmitter {
             results.forEach(trait => {
                 let { serialNumber } = trait;
                 if (trait.error || (!serialNumber)) {
-                    const hash = JSON.stringify(trait);
+                    const hash = inspect(trait, { depth: null });
                     if (!this._currentErrors.has(hash)) {
                         const capName = Object.keys(trait).filter(key => key !== 'error' && key !== 'serialNumber')[0];
                         if (trait.error) {
