@@ -1,6 +1,6 @@
 {
   "name": "nrf-device-lister",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "List USB/serialport/jlink devices based on traits and conflate them by serial number",
   "module": "src/device-lister.js",
   "main": "dist/device-lister.js",
@@ -14,6 +14,13 @@
     "lint": "eslint src/",
     "lintfix": "eslint src/ --fix"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
   "dependencies": {
     "commander": "^2.14.1",
     "debug": "^3.1.0",
