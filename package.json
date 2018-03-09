@@ -6,7 +6,6 @@
   "main": "dist/device-lister.js",
   "author": "Iván Sánchez Ortega <ivan@sanchezortega.es>",
   "license": "BSD-3",
-  "private": true,
   "bin": {
     "nrf-device-lister": "./bin/device-lister.js"
   },
