@@ -72,12 +72,12 @@ lister.on('conflated', function(deviceMap){
 // fetched, or when enumeration failed.
 // There are two specific cases where this will happen: no permissions
 // to open a USB device through libusb, and some error in pc-nrfjprog-js
-// (or the subyacent jlink libraries).
+// (or the subjacent jlink libraries).
 // The recommendation is to raise all errors related to devices with the 'jlink'
 // trait, and devices with the 'usb' trait only if their Product ID/Vendor ID
 // (as listed in the usb Device) are of interest to your application.
 // Errors that happen on consecutive enumerations are throttled down: only
-// the first one is emmited.
+// the first one is emitted.
 lister.on('error', function(device){
     // the only parameter is a non-conflated device.
     // It will look like:
@@ -105,7 +105,7 @@ lister.on('error', function(device){
 // serial ports (which are not USB devices and therefore do not report
 // any serial numbers)
 // 'noserialnumber' events that happen on consecutive enumerations are throttled down: only
-// the first one is emmited.
+// the first one is emitted.
 lister.on('noserialnumber', function(device){
     // the only parameter is a non-conflated device.
     // It will look like:
