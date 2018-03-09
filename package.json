@@ -15,6 +15,13 @@
     "lint": "eslint src/",
     "lintfix": "eslint src/ --fix"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
   "dependencies": {
     "commander": "^2.14.1",
     "debug": "^3.1.0",
