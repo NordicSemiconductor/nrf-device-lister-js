@@ -12,7 +12,7 @@ Node.js 8 or newer
 
 ## Usage as a command
 
-Do a `npm install nrf-device-lister-js` or `yarn add nrf-device-lister-js`, then run in a console:
+Do a `npm install nrf-device-lister` or `yarn add nrf-device-lister`, then run in a console:
 
 `node node_modules/.bin/nrf-device-lister --help`
 
