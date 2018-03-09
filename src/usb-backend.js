@@ -37,12 +37,23 @@ const debug = Debug('device-lister:usb');
 const SEGGER_VENDOR_ID = 0x1366;
 const NORDIC_VENDOR_ID = 0x1915;
 
+function openDevice(device) {
+    return new Promise((resolve, reject) => {
+        try {
+            device.open();
+        } catch (ex) {
+            return reject(ex);
+        }
+        return resolve();
+    });
+}
+
 // Aux shorthand function. Given an instance of Usb's Device (should be open already) and
 // a string descriptor index, returns a Promise to a String.
 function getStr(device, index) {
     return new Promise((res, rej) => {
         device.getStringDescriptor(index, (err, data) => {
-            if (err) {
+            if (err && err !== Usb.LIBUSB_TRANSFER_COMPLETED) {
                 rej(err);
             } else {
                 res(data);
@@ -91,14 +102,7 @@ function normalizeUsbDevice(usbDevice) {
     } = deviceDescriptor;
     const debugIdStr = `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`;
 
-    return new Promise((res, rej) => {
-        try {
-            usbDevice.open();
-        } catch (ex) {
-            return rej(ex);
-        }
-        return res();
-    }).then(() => {
+    return openDevice(usbDevice).then(() => {
         debug(`Opened: ${debugIdStr}`);
 
         return Promise.all([
@@ -108,7 +112,6 @@ function normalizeUsbDevice(usbDevice) {
         ]);
     }).then(([serialNumber, manufacturer, product]) => {
         debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
-        usbDevice.close();
 
         result.serialNumber = serialNumber;
         result.usb.serialNumber = serialNumber;
