@@ -31,11 +31,17 @@
     "usb": "^1.3.1"
   },
   "devDependencies": {
+    "@ivansanchez/eslint-config-nrf-base": "^0.0.4",
+    "@ivansanchez/eslint-config-nrf-bsd": "^0.0.4",
     "eslint": "^4.16.0",
-    "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.8.0",
     "rollup": "^0.56.4",
     "rollup-plugin-buble": "^0.18.0",
     "rollup-plugin-eslint": "^4.0.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "@ivansanchez/eslint-config-nrf-base",
+      "@ivansanchez/eslint-config-nrf-bsd"
+    ]
   }
 }
