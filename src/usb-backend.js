@@ -211,3 +211,14 @@ export function reenumerateNordicUsb() {
 
     return Promise.all(usbDevices.map(normalizeUsbDevice));
 }
+
+// Like reenumerateUsb, but cares only about USB devices with
+// the Nordic VendorId (0x1915) and Segger VendorId (0x1366)
+export function reenumerateNordicAndSeggerUsb() {
+    debug('Reenumerating all Nordic and SEGGER USB devices...');
+    const usbDevices = Usb.getDeviceList().filter(device =>
+        device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID ||
+        device.deviceDescriptor.idVendor === SEGGER_VENDOR_ID);
+
+    return Promise.all(usbDevices.map(normalizeUsbDevice));
+}
