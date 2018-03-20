@@ -66,6 +66,30 @@ function getStringDescriptor(device, index) {
     });
 }
 
+/*
+ * Returns a promise resolved to boolean for a Nordic device
+ * indicating presence of DFU trigger interface,
+ * otherwise resolves to undefined
+ */
+function findDFUTriggerInterface(device) {
+    if (device.deviceDescriptor.idVendor !== NORDIC_VENDOR_ID) {
+        return Promise.resolve(false);
+    }
+    return new Promise(resolve => {
+        const dfuTriggerInterface = device.interfaces.findIndex(iface => (
+            iface.descriptor.bInterfaceClass === 255 &&
+            iface.descriptor.bInterfaceSubClass === 1 &&
+            iface.descriptor.bInterfaceProtocol === 1
+        ));
+        if (dfuTriggerInterface > -1) {
+            debug('found dfu trigger interface', dfuTriggerInterface);
+            resolve(true);
+        } else {
+            resolve(false);
+        }
+    });
+}
+
 /**
  * Perform control transfers to get multiple string descriptors from an
  * already open usb device. Reading the descriptors in sequence, as
@@ -88,7 +112,6 @@ function getStringDescriptors(device, indexes) {
 function hexpad4(number) {
     return `0x${number.toString(16).padStart(4, '0')}`;
 }
-
 
 /*
  * Given an instance of a USB device, returns *one* structure like:
@@ -140,15 +163,19 @@ function normalizeUsbDevice(usbDevice) {
                 iSerialNumber,
                 iManufacturer,
                 iProduct,
-            ]);
-        }).then(([serialNumber, manufacturer, product]) => {
-            debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
+            ]).then(descriptors => (
+                findDFUTriggerInterface(usbDevice)
+                    .then(dfuTrigger => descriptors.concat(dfuTrigger))
+            ));
+        }).then(([serialNumber, manufacturer, product, dfuTrigger]) => {
+            debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product, dfuTrigger]);
             usbDevice.close();
 
             result.serialNumber = serialNumber;
             result.usb.serialNumber = serialNumber;
             result.usb.manufacturer = manufacturer;
             result.usb.product = product;
+            result.usb.dfuTrigger = dfuTrigger;
             return result;
         }).catch(ex => {
             debug(`Error! ${debugIdStr}`, ex.message);
