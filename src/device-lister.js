@@ -32,6 +32,7 @@
 import EventEmitter from 'events';
 import Usb from 'usb';
 import Debug from 'debug';
+import { inspect } from 'util';
 
 import { reenumerateUsb, reenumerateSeggerUsb, reenumerateNordicUsb } from './usb-backend';
 import reenumerateSerialPort from './serialport-backend';
@@ -40,10 +41,10 @@ import reenumerateJlink from './jlink-backend';
 const debug = Debug('device-lister:conflater');
 
 export default class DeviceLister extends EventEmitter {
-    constructor(capabilities = {}) {
+    constructor(traits = {}) {
         super();
 
-        debug('Instantiating DeviceLister with capabilities:', capabilities);
+        debug('Instantiating DeviceLister with traits:', traits);
 
         this._currentDevices = new Map();
         this._currentErrors = new Set();
@@ -52,7 +53,7 @@ export default class DeviceLister extends EventEmitter {
 
         const {
             usb, nordicUsb, seggerUsb, jlink, serialport,
-        } = capabilities;
+        } = traits;
 
         if (usb) { this._backends.push(reenumerateUsb); }
         if (nordicUsb) { this._backends.push(reenumerateNordicUsb); }
@@ -111,18 +112,18 @@ export default class DeviceLister extends EventEmitter {
         const newErrors = new Set();
 
         backendsResult.forEach(results => {
-            results.forEach(capability => {
-                let { serialNumber } = capability;
-                if (capability.error || (!serialNumber)) {
-                    const hash = JSON.stringify(capability);
+            results.forEach(trait => {
+                let { serialNumber } = trait;
+                if (trait.error || (!serialNumber)) {
+                    const hash = inspect(trait, { depth: null });
                     if (!this._currentErrors.has(hash)) {
-                        const capName = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-                        if (capability.error) {
-                            debug(capName, 'error', capability.error.message);
-                            this.emit('error', capability);
+                        const capName = Object.keys(trait).filter(key => key !== 'error' && key !== 'serialNumber')[0];
+                        if (trait.error) {
+                            debug(capName, 'error', trait.error.message);
+                            this.emit('error', trait);
                         } else {
                             debug(capName, 'no serial number');
-                            this.emit('noserialnumber', capability);
+                            this.emit('noserialnumber', trait);
                         }
                     }
 
@@ -135,7 +136,7 @@ export default class DeviceLister extends EventEmitter {
                     }
 
                     let device = deviceMap.get(serialNumber) || {};
-                    device = Object.assign({}, device, capability);
+                    device = Object.assign({}, device, trait);
                     deviceMap.set(serialNumber, device);
                 }
             });

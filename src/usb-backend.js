@@ -46,9 +46,15 @@ const debug = Debug('device-lister:usb');
 const SEGGER_VENDOR_ID = 0x1366;
 const NORDIC_VENDOR_ID = 0x1915;
 
-// Aux shorthand function. Given an instance of Usb's Device (should be open already) and
-// a string descriptor index, returns a Promise to a String.
-function getStr(device, index) {
+/**
+ * Perform a control transfer to get a string descriptor from an already
+ * open usb device.
+ *
+ * @param {Object} device The usb device to get the descriptor for.
+ * @param {number} index The index to get.
+ * @returns {Promise} Promise that resolves with string descriptor.
+ */
+function getStringDescriptor(device, index) {
     return new Promise((res, rej) => {
         device.getStringDescriptor(index, (err, data) => {
             if (err) {
@@ -58,6 +64,24 @@ function getStr(device, index) {
             }
         });
     });
+}
+
+/**
+ * Perform control transfers to get multiple string descriptors from an
+ * already open usb device. Reading the descriptors in sequence, as
+ * parallelizing this will produce random libusb errors.
+ *
+ * @param {Object} device The usb device to get the descriptors for.
+ * @param {Array<number>} indexes The indexes to get.
+ * @returns {Promise} Promise that resolves with array of string descriptors.
+ */
+function getStringDescriptors(device, indexes) {
+    return indexes.reduce((prev, index) => (
+        prev.then(descriptorValues => (
+            getStringDescriptor(device, index)
+                .then(descriptorValue => [...descriptorValues, descriptorValue])
+        ))
+    ), Promise.resolve([]));
 }
 
 // Aux function to prettify USB vendor/product IDs
@@ -112,10 +136,10 @@ function normalizeUsbDevice(usbDevice) {
         }).then(() => {
             debug(`Opened: ${debugIdStr}`);
 
-            return Promise.all([
-                getStr(usbDevice, iSerialNumber),
-                getStr(usbDevice, iManufacturer),
-                getStr(usbDevice, iProduct),
+            return getStringDescriptors(usbDevice, [
+                iSerialNumber,
+                iManufacturer,
+                iProduct,
             ]);
         }).then(([serialNumber, manufacturer, product]) => {
             debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
