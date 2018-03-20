@@ -55,7 +55,7 @@ if (args.debug) {
 }
 
 if (!args.usb && !args.nordicUsb && !args.seggerUsb && !args.serialport && !args.jlink) {
-    console.error('No device capabilties specified, no devices will be listed!');
+    console.error('No device traits specified, no devices will be listed!');
     console.error('Run with the --help option to see types of devices to watch for.');
 }
 
@@ -72,29 +72,29 @@ function hexpad4(number) {
     return `0x${number.toString(16).padStart(4, '0')}`;
 }
 
-lister.on('error', capability => {
-    const filteredKey = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
+lister.on('error', trait => {
+    const filteredKey = Object.keys(trait).filter(key => key !== 'error' && key !== 'serialNumber')[0];
     if (filteredKey === 'usb') {
-        const { idVendor, idProduct } = capability.usb.device.deviceDescriptor;
+        const { idVendor, idProduct } = trait.usb.device.deviceDescriptor;
         console.error(
             'usb error when enumerating USB device with VID/PID',
             hexpad4(idVendor), '/', hexpad4(idProduct),
-            ':', capability.error.message
+            ':', trait.error.message
         );
     } else if (filteredKey === 'jlink') {
-        console.error('jprog/jlink error: ', capability.error);
+        console.error('jprog/jlink error: ', trait.error);
     } else {
-        console.error(filteredKey, 'error', capability.error.message);
+        console.error(filteredKey, 'error', trait.error.message);
     }
 });
 
-lister.on('noserialnumber', capability => {
-    const filteredKey = Object.keys(capability).filter(key => key !== 'error' && key !== 'serialNumber')[0];
+lister.on('noserialnumber', trait => {
+    const filteredKey = Object.keys(trait).filter(key => key !== 'error' && key !== 'serialNumber')[0];
 
     if (filteredKey === 'serialport') {
-        console.error('no serial number for serial port', capability.serialport.comName);
+        console.error('no serial number for serial port', trait.serialport.comName);
     } else {
-        console.error('noserialnumber', capability);
+        console.error('noserialnumber', trait);
     }
 });
 

@@ -32,14 +32,29 @@
 import Usb from 'usb';
 import Debug from 'debug';
 
+import { Mutex } from 'await-semaphore';
+
+
+// Module-wide mutex. Not the most efficient (prevents querying several USB devices
+// at once) but should do the trick. TODO: Replace this with a Map of mutexes
+// keyed by USB bus / USB address.
+const mutex = new Mutex();
+
+
 const debug = Debug('device-lister:usb');
 
 const SEGGER_VENDOR_ID = 0x1366;
 const NORDIC_VENDOR_ID = 0x1915;
 
-// Aux shorthand function. Given an instance of Usb's Device (should be open already) and
-// a string descriptor index, returns a Promise to a String.
-function getStr(device, index) {
+/**
+ * Perform a control transfer to get a string descriptor from an already
+ * open usb device.
+ *
+ * @param {Object} device The usb device to get the descriptor for.
+ * @param {number} index The index to get.
+ * @returns {Promise} Promise that resolves with string descriptor.
+ */
+function getStringDescriptor(device, index) {
     return new Promise((res, rej) => {
         device.getStringDescriptor(index, (err, data) => {
             if (err) {
@@ -58,7 +73,7 @@ function getStr(device, index) {
  */
 function findDFUTriggerInterface(device) {
     if (device.deviceDescriptor.idVendor !== NORDIC_VENDOR_ID) {
-        return Promise.resolve();
+        return Promise.resolve(false);
     }
     return new Promise(resolve => {
         const dfuTriggerInterface = device.interfaces.findIndex(iface => (
@@ -75,20 +90,27 @@ function findDFUTriggerInterface(device) {
     });
 }
 
+/**
+ * Perform control transfers to get multiple string descriptors from an
+ * already open usb device. Reading the descriptors in sequence, as
+ * parallelizing this will produce random libusb errors.
+ *
+ * @param {Object} device The usb device to get the descriptors for.
+ * @param {Array<number>} indexes The indexes to get.
+ * @returns {Promise} Promise that resolves with array of string descriptors.
+ */
+function getStringDescriptors(device, indexes) {
+    return indexes.reduce((prev, index) => (
+        prev.then(descriptorValues => (
+            getStringDescriptor(device, index)
+                .then(descriptorValue => [...descriptorValues, descriptorValue])
+        ))
+    ), Promise.resolve([]));
+}
+
 // Aux function to prettify USB vendor/product IDs
 function hexpad4(number) {
     return `0x${number.toString(16).padStart(4, '0')}`;
-}
-
-/*
- * Returns an array of results of an array of promises resolved sequentially
- */
-function promiseSerial(funcs) {
-    return funcs.reduce((promise, func) => (
-        promise.then(result => (
-            func().then(Array.prototype.concat.bind(result))
-        ))
-    ), Promise.resolve([]));
 }
 
 /*
@@ -125,48 +147,52 @@ function normalizeUsbDevice(usbDevice) {
     } = deviceDescriptor;
     const debugIdStr = `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`;
 
-    return new Promise((res, rej) => {
-        try {
-            usbDevice.open();
-        } catch (ex) {
-            return rej(ex);
-        }
-        return res();
-    }).then(() => {
-        debug(`Opened: ${debugIdStr}`);
-
-        return promiseSerial([
-            getStr.bind(null, usbDevice, iSerialNumber),
-            getStr.bind(null, usbDevice, iManufacturer),
-            getStr.bind(null, usbDevice, iProduct),
-            findDFUTriggerInterface.bind(null, usbDevice),
-        ]);
-    }).then(([serialNumber, manufacturer, product, dfuTrigger]) => {
-        debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
-        usbDevice.close();
-
-        result.serialNumber = serialNumber;
-        result.usb.serialNumber = serialNumber;
-        result.usb.manufacturer = manufacturer;
-        result.usb.product = product;
-        if (dfuTrigger !== undefined) {
-            result.usb.dfuTrigger = dfuTrigger;
-        }
-        return result;
-    }).catch(ex => {
-        debug(`Error! ${debugIdStr}`, ex.message);
-
-        result.error = ex;
-    })
-        .then(() => {
-        // Clean up
+    return mutex.use(() => {
+        debug('Mutex grabbed.');
+        return new Promise((res, rej) => {
             try {
-                usbDevice.close();
+                usbDevice.open();
             } catch (ex) {
-                debug(`Error! ${debugIdStr}`, ex.message);
+                return rej(ex);
             }
+            return res();
+        }).then(() => {
+            debug(`Opened: ${debugIdStr}`);
+
+            return getStringDescriptors(usbDevice, [
+                iSerialNumber,
+                iManufacturer,
+                iProduct,
+            ]).then(descriptors => (
+                findDFUTriggerInterface(usbDevice)
+                    .then(dfuTrigger => descriptors.concat(dfuTrigger))
+            ));
+        }).then(([serialNumber, manufacturer, product, dfuTrigger]) => {
+            debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product, dfuTrigger]);
+            usbDevice.close();
+
+            result.serialNumber = serialNumber;
+            result.usb.serialNumber = serialNumber;
+            result.usb.manufacturer = manufacturer;
+            result.usb.product = product;
+            result.usb.dfuTrigger = dfuTrigger;
+            return result;
+        }).catch(ex => {
+            debug(`Error! ${debugIdStr}`, ex.message);
+
+            result.error = ex;
         })
-        .then(() => result);
+            .then(() => {
+                // Clean up
+                try {
+                    usbDevice.close();
+                } catch (ex) {
+                    debug(`Error! ${debugIdStr}`, ex.message);
+                }
+            })
+            .then(() => debug('Releasing mutex.'))
+            .then(() => result);
+    });
 }
 
 /* Returns a Promise to a list of objects, like:
