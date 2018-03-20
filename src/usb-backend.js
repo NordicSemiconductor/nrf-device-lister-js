@@ -32,7 +32,7 @@
 import Usb from 'usb';
 import Debug from 'debug';
 
-import {Mutex} from 'await-semaphore';
+import { Mutex } from 'await-semaphore';
 
 
 // Module-wide mutex. Not the most efficient (prevents querying several USB devices
@@ -124,7 +124,7 @@ function normalizeUsbDevice(usbDevice) {
     } = deviceDescriptor;
     const debugIdStr = `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`;
 
-    return mutex.use(()=>{
+    return mutex.use(() => {
         debug('Mutex grabbed.');
         return new Promise((res, rej) => {
             try {
@@ -154,16 +154,17 @@ function normalizeUsbDevice(usbDevice) {
             debug(`Error! ${debugIdStr}`, ex.message);
 
             result.error = ex;
-        }).then(() => {
-            // Clean up
-            try {
-                usbDevice.close();
-            } catch (ex) {
-                debug(`Error! ${debugIdStr}`, ex.message);
-            }
         })
-        .then(() => debug('Releasing mutex.'))
-        .then(() => result);
+            .then(() => {
+                // Clean up
+                try {
+                    usbDevice.close();
+                } catch (ex) {
+                    debug(`Error! ${debugIdStr}`, ex.message);
+                }
+            })
+            .then(() => debug('Releasing mutex.'))
+            .then(() => result);
     });
 }
 
