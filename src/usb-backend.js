@@ -97,7 +97,7 @@ function hexpad4(number) {
  * {
  *   error: undefined
  *   serialNumber: 1234,
- *   usb: {
+ *   [traitName]: {
  *     serialNumber: 1234,
  *     manufacturer: 'ACME',
  *     product: 'Sprocket adaptor'
@@ -149,9 +149,9 @@ function normalizeUsbDeviceClosure(deviceFilter, traitName) {
                     ]).then(([serialNumber, manufacturer, product]) => {
                         debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
                         result.serialNumber = serialNumber;
-                        result.usb.serialNumber = serialNumber;
-                        result.usb.manufacturer = manufacturer;
-                        result.usb.product = product;
+                        result[traitName].serialNumber = serialNumber;
+                        result[traitName].manufacturer = manufacturer;
+                        result[traitName].product = product;
                     });
                 }
                 debug(`Device ${debugIdStr} didn't pass the filter`);
@@ -175,7 +175,8 @@ function normalizeUsbDeviceClosure(deviceFilter, traitName) {
     };
 }
 
-/* Returns a Promise to a list of objects, like:
+/*
+ * Given filters, and a trait name, returns a Promise to a list of objects, like:
  *
  * [{
  *   error: undefined
@@ -217,7 +218,7 @@ function filterSeggerVendorId(device) {
 }
 export function reenumerateSeggerUsb() {
     debug('Reenumerating all Segger USB devices...');
-    return genericReenumerateUsb(filterSeggerVendorId, () => true, 'usb');
+    return genericReenumerateUsb(filterSeggerVendorId, () => true, 'seggerUsb');
 }
 
 
@@ -227,7 +228,7 @@ function filterNordicVendorId(device) {
 }
 export function reenumerateNordicUsb() {
     debug('Reenumerating all Nordic USB devices...');
-    return genericReenumerateUsb(filterNordicVendorId, () => true, 'usb');
+    return genericReenumerateUsb(filterNordicVendorId, () => true, 'nordicUsb');
 }
 
 // Like reenumerateUsb, but cares only about USB devices with the Nordic VendorId (0x1915)
@@ -241,5 +242,5 @@ function filterDfuTrigger(device) {
 }
 export function reenumerateNordicDfuTrigger() {
     debug('Reenumerating all Nordic USB devices with DFU trigger interface...');
-    return genericReenumerateUsb(filterNordicVendorId, filterDfuTrigger, 'nordic-dfu-trigger');
+    return genericReenumerateUsb(filterNordicVendorId, filterDfuTrigger, 'nordicDfu');
 }
