@@ -55,7 +55,8 @@ if (args.debug) {
     debug.enable('device-lister:*');
 }
 
-if (!args.usb && !args.nordicUsb && !args.nordicDfu && !args.seggerUsb && !args.serialport && !args.jlink) {
+if (!args.usb && !args.nordicUsb && !args.nordicDfu && !args.seggerUsb &&
+    !args.serialport && !args.jlink) {
     console.error('No device traits specified, no devices will be listed!');
     console.error('Run with the --help option to see types of devices to watch for.');
 }
