@@ -32,14 +32,29 @@
 import Usb from 'usb';
 import Debug from 'debug';
 
+import { Mutex } from 'await-semaphore';
+
+
+// Module-wide mutex. Not the most efficient (prevents querying several USB devices
+// at once) but should do the trick. TODO: Replace this with a Map of mutexes
+// keyed by USB bus / USB address.
+const mutex = new Mutex();
+
+
 const debug = Debug('device-lister:usb');
 
 const SEGGER_VENDOR_ID = 0x1366;
 const NORDIC_VENDOR_ID = 0x1915;
 
-// Aux shorthand function. Given an instance of Usb's Device (should be open already) and
-// a string descriptor index, returns a Promise to a String.
-function getStr(device, index) {
+/**
+ * Perform a control transfer to get a string descriptor from an already
+ * open usb device.
+ *
+ * @param {Object} device The usb device to get the descriptor for.
+ * @param {number} index The index to get.
+ * @returns {Promise} Promise that resolves with string descriptor.
+ */
+function getStringDescriptor(device, index) {
     return new Promise((res, rej) => {
         device.getStringDescriptor(index, (err, data) => {
             if (err) {
@@ -49,6 +64,24 @@ function getStr(device, index) {
             }
         });
     });
+}
+
+/**
+ * Perform control transfers to get multiple string descriptors from an
+ * already open usb device. Reading the descriptors in sequence, as
+ * parallelizing this will produce random libusb errors.
+ *
+ * @param {Object} device The usb device to get the descriptors for.
+ * @param {Array<number>} indexes The indexes to get.
+ * @returns {Promise} Promise that resolves with array of string descriptors.
+ */
+function getStringDescriptors(device, indexes) {
+    return indexes.reduce((prev, index) => (
+        prev.then(descriptorValues => (
+            getStringDescriptor(device, index)
+                .then(descriptorValue => [...descriptorValues, descriptorValue])
+        ))
+    ), Promise.resolve([]));
 }
 
 // Aux function to prettify USB vendor/product IDs
@@ -97,50 +130,48 @@ function normalizeUsbDeviceClosure(deviceFilter, traitName) {
         } = deviceDescriptor;
         const debugIdStr = `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`;
 
-        return new Promise((res, rej) => {
-            try {
-                usbDevice.open();
-            } catch (ex) {
-                return rej(ex);
-            }
-            return res();
-        }).then(() => {
-            debug(`Opened: ${debugIdStr}`);
-
-            return Promise.all([
-                getStr(usbDevice, iSerialNumber),
-                getStr(usbDevice, iManufacturer),
-                getStr(usbDevice, iProduct),
-                deviceFilter(usbDevice),
-            ]);
-        }).then(([serialNumber, manufacturer, product, filtered]) => {
-            debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
-            usbDevice.close();
-
-            if (filtered) {
-                result.serialNumber = serialNumber;
-                result[traitName].serialNumber = serialNumber;
-                result[traitName].manufacturer = manufacturer;
-                result[traitName].product = product;
-            } else {
+        return mutex.use(() => {
+            debug('Mutex grabbed.');
+            return new Promise((res, rej) => {
+                try {
+                    usbDevice.open();
+                } catch (ex) {
+                    return rej(ex);
+                }
+                return res();
+            }).then(() => {
+                debug(`Opened: ${debugIdStr}`);
+                if (deviceFilter(usbDevice)) {
+                    return getStringDescriptors(usbDevice, [
+                        iSerialNumber,
+                        iManufacturer,
+                        iProduct,
+                    ]).then(([serialNumber, manufacturer, product]) => {
+                        debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
+                        result.serialNumber = serialNumber;
+                        result.usb.serialNumber = serialNumber;
+                        result.usb.manufacturer = manufacturer;
+                        result.usb.product = product;
+                    });
+                }
                 debug(`Device ${debugIdStr} didn't pass the filter`);
                 result = undefined;
-            }
-            return result;
-        }).catch(ex => {
-            debug(`Error! ${debugIdStr}`, ex.message);
+                return Promise.resolve();
+            }).catch(ex => {
+                debug(`Error! ${debugIdStr}`, ex.message);
 
-            result.error = ex;
-        })
-            .then(() => {
-            // Clean up
+                result.error = ex;
+            }).then(() => {
+                // Clean up
                 try {
                     usbDevice.close();
                 } catch (ex) {
                     debug(`Error! ${debugIdStr}`, ex.message);
                 }
-            })
-            .then(() => result);
+                debug('Releasing mutex.');
+                return result;
+            });
+        });
     };
 }
 
