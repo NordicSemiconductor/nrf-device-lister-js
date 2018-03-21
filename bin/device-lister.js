@@ -43,7 +43,7 @@ args
     .description('List conflated USB/serialport/jlink devices')
     .option('-u, --usb', 'Include USB devices (those available through libusb)')
     .option('-n, --nordic-usb', 'Include Nordic USB devices (with VendorID 0x1915, if available through libusb)')
-    .option('-f, --nordic-dfu', 'Include Nordic USB devices with DFU sidechannel')
+    .option('-f, --nordic-dfu', 'Include Nordic USB devices with DFU trigger interface')
     .option('-g, --segger-usb', 'Include Segger USB devices (with VendorID 0x1366, if available through libusb)')
     .option('-s, --serialport', 'Include serial ports (including USB CDC ACMs)')
     .option('-j, --jlink', 'Include J-link probes (those available through pc-nrfjprog-js)')

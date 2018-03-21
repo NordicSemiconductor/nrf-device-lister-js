@@ -231,15 +231,15 @@ export function reenumerateNordicUsb() {
 }
 
 // Like reenumerateUsb, but cares only about USB devices with the Nordic VendorId (0x1915)
-// and a DFU sidechannel trigger interface
-function filterDfuSidechannel(device) {
+// and a DFU trigger interface
+function filterDfuTrigger(device) {
     return device.interfaces.some(iface => (
         iface.descriptor.bInterfaceClass === 255 &&
             iface.descriptor.bInterfaceSubClass === 1 &&
             iface.descriptor.bInterfaceProtocol === 1
     ));
 }
-export function reenumerateNordicDfuSidechannel() {
-    debug('Reenumerating all Nordic USB devices with DFU sidechannel trigger...');
-    return genericReenumerateUsb(filterNordicVendorId, filterDfuSidechannel, 'nordic-dfu-trigger');
+export function reenumerateNordicDfuTrigger() {
+    debug('Reenumerating all Nordic USB devices with DFU trigger interface...');
+    return genericReenumerateUsb(filterNordicVendorId, filterDfuTrigger, 'nordic-dfu-trigger');
 }
