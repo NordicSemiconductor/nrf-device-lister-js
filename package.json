@@ -11,8 +11,8 @@
   },
   "scripts": {
     "rollup": "rollup -c rollup.config.js",
-    "lint": "eslint src/",
-    "lintfix": "eslint src/ --fix"
+    "lint": "eslint src/ bin/",
+    "lintfix": "eslint src/ bin/ --fix"
   },
   "files": [
     "bin/",

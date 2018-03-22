@@ -32,6 +32,7 @@ var lister = new DeviceLister({
     usb: true,
     nordicUsb: false,   // Like 'usb', but filters by VendorId
     seggerUsb: false,   // Like 'usb', but filters by VendorId
+    nordicDfu: false,   // Like 'nordicUsb', but also looks for the Nordic DFU trigger interface
     serialport: true,
     jlink: true,
 });
@@ -54,6 +55,18 @@ lister.on('conflated', function(deviceMap){
        { error: undefined,
          serialNumber: 12345678,
          usb: { serialNumber: 12345678,
+                 manufacturer: "Manufacturer Co",
+                 product: "Gizmo",
+                 device: (Instance of Device as per 'usb' module) }
+         nordicUsb: { serialNumber: 12345678,
+                 manufacturer: "Manufacturer Co",
+                 product: "Gizmo",
+                 device: (Instance of Device as per 'usb' module) }
+         seggerUsb: { serialNumber: 12345678,
+                 manufacturer: "Manufacturer Co",
+                 product: "Gizmo",
+                 device: (Instance of Device as per 'usb' module) }
+         nordicDfu: { serialNumber: 12345678,
                  manufacturer: "Manufacturer Co",
                  product: "Gizmo",
                  device: (Instance of Device as per 'usb' module) }
