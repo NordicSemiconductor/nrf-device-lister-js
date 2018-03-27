@@ -34,7 +34,7 @@ import Usb from 'usb';
 import Debug from 'debug';
 import { inspect } from 'util';
 
-import { reenumerateUsb, reenumerateSeggerUsb, reenumerateNordicUsb, reenumerateNordicDfuTrigger } from './usb-backend';
+import { reenumerateUsb, reenumerateSeggerUsb, reenumerateNordicUsb, reenumerateNordicDfuTrigger, startCache, stopCache } from './usb-backend';
 import reenumerateSerialPort from './serialport-backend';
 import reenumerateJlink from './jlink-backend';
 
@@ -68,6 +68,8 @@ export default class DeviceLister extends EventEmitter {
     start() {
         debug('Attaching event listeners for USB attach/detach');
 
+        startCache();
+
         Usb.on('attach', this._boundReenumerate);
         Usb.on('detach', this._boundReenumerate);
         this.reenumerate();
@@ -77,6 +79,8 @@ export default class DeviceLister extends EventEmitter {
     // Needed to let programs exit gracefully
     stop() {
         debug('Removing event listeners for USB attach/detach');
+
+        stopCache();
 
         Usb.removeListener('attach', this._boundReenumerate);
         Usb.removeListener('detach', this._boundReenumerate);

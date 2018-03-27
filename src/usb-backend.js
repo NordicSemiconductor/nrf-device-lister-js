@@ -40,6 +40,17 @@ import { Mutex } from 'await-semaphore';
 // keyed by USB bus / USB address.
 const mutex = new Mutex();
 
+// Cache of devices that the backend already knows about. The map has the deviceId
+// ("busNr.deviceAddr VID/PID") as key and the following object as value:
+// {
+//   serialNumber: 1234,
+//   manufacturer: 'ACME',
+//   product: 'Sprocket adaptor',
+//   nordicDfuTrigger: false,
+//   device: (instance of usb's Device)
+// }
+const cachedDevices = new Map();
+let isCacheEnabled = false;
 
 const debug = Debug('device-lister:usb');
 
@@ -89,6 +100,12 @@ function hexpad4(number) {
     return `0x${number.toString(16).padStart(4, '0')}`;
 }
 
+function getDeviceId(device) {
+    const { busNumber, deviceAddress } = device;
+    const { idVendor, idProduct } = device.deviceDescriptor;
+    return `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`;
+}
+
 
 /*
  * Given a filter function, and a trait name, returns a closure over a function that:
@@ -111,9 +128,9 @@ function hexpad4(number) {
  * If the device didn't pass the `deviceFilter`, the closure function will return
  * undefined instead.
  */
-function normalizeUsbDeviceClosure(deviceFilter, traitName) {
+function normalizeUsbDeviceClosure(traitName) {
     return function normalizeUsbDevice(usbDevice) {
-        let result = {
+        const result = {
             error: undefined,
             serialNumber: undefined,
             [traitName]: {
@@ -124,11 +141,19 @@ function normalizeUsbDeviceClosure(deviceFilter, traitName) {
             },
         };
 
-        const { busNumber, deviceAddress, deviceDescriptor } = usbDevice;
-        const {
-            iSerialNumber, iManufacturer, iProduct, idVendor, idProduct,
-        } = deviceDescriptor;
-        const debugIdStr = `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`;
+        const deviceId = getDeviceId(usbDevice);
+        const cachedDevice = cachedDevices.get(deviceId);
+
+        if (cachedDevice) {
+            debug('Pulling from cache:', deviceId);
+            result.serialNumber = cachedDevice.serialNumber;
+            result[traitName].serialNumber = cachedDevice.serialNumber;
+            result[traitName].manufacturer = cachedDevice.manufacturer;
+            result[traitName].product = cachedDevice.product;
+            result[traitName].nordicDfuTrigger = cachedDevice.nordicDfuTrigger;
+            result[traitName].device = cachedDevice.device;
+            return Promise.resolve(result);
+        }
 
         return mutex.use(() => {
             debug('Mutex grabbed.');
@@ -140,35 +165,38 @@ function normalizeUsbDeviceClosure(deviceFilter, traitName) {
                 }
                 return res();
             }).then(() => {
-                debug(`Opened: ${debugIdStr}`);
-                if (deviceFilter(usbDevice)) {
-                    return getStringDescriptors(usbDevice, [
-                        iSerialNumber,
-                        iManufacturer,
-                        iProduct,
-                    ]).then(([serialNumber, manufacturer, product]) => {
-                        debug(`Enumerated: ${debugIdStr} `, [serialNumber, manufacturer, product]);
-                        result.serialNumber = serialNumber;
-                        result[traitName].serialNumber = serialNumber;
-                        result[traitName].manufacturer = manufacturer;
-                        result[traitName].product = product;
-                    });
-                }
-                debug(`Device ${debugIdStr} didn't pass the filter`);
-                result = undefined;
-                return Promise.resolve();
+                debug(`Opened: ${deviceId}`);
+                return getStringDescriptors(usbDevice, [
+                    usbDevice.deviceDescriptor.iSerialNumber,
+                    usbDevice.deviceDescriptor.iManufacturer,
+                    usbDevice.deviceDescriptor.iProduct,
+                ]).then(([serialNumber, manufacturer, product]) => {
+                    debug(`Enumerated: ${deviceId} `, [serialNumber, manufacturer, product]);
+                    result.serialNumber = serialNumber;
+                    result[traitName].serialNumber = serialNumber;
+                    result[traitName].manufacturer = manufacturer;
+                    result[traitName].product = product;
+                    result[traitName].nordicDfuTrigger = usbDevice.interfaces.some(iface => (
+                        iface.descriptor.bInterfaceClass === 255 &&
+                        iface.descriptor.bInterfaceSubClass === 1 &&
+                        iface.descriptor.bInterfaceProtocol === 1
+                    ));
+                });
             }).catch(ex => {
-                debug(`Error! ${debugIdStr}`, ex.message);
-
+                debug(`Error! ${deviceId}`, ex.message);
                 result.error = ex;
             }).then(() => {
                 // Clean up
                 try {
                     usbDevice.close();
                 } catch (ex) {
-                    debug(`Error! ${debugIdStr}`, ex.message);
+                    debug(`Error! ${deviceId}`, ex.message);
                 }
                 debug('Releasing mutex.');
+                if (isCacheEnabled) {
+                    debug('Adding to cache:', deviceId);
+                    cachedDevices.set(deviceId, result);
+                }
                 return result;
             });
         });
@@ -194,53 +222,56 @@ function normalizeUsbDeviceClosure(deviceFilter, traitName) {
  *
  * In any USB backend, errors are per-device.
  */
-function genericReenumerateUsb(
-    closedDeviceFilter = () => true, // Applies to *closed* instances of usb's Device
-    openedDeviceFilter = () => true, // Applies to *opened* instances of usb's Device
-    traitName = 'usb'
-) {
-    const usbDevices = Usb.getDeviceList().filter(closedDeviceFilter);
+function genericReenumerateUsb(traitName, vendorId = null) {
+    let usbDevices = Usb.getDeviceList();
+    if (vendorId !== null) {
+        usbDevices = usbDevices.filter(device => (
+            device.deviceDescriptor.idVendor === vendorId
+        ));
+    }
     return Promise.all(usbDevices
-        .map(normalizeUsbDeviceClosure(openedDeviceFilter, traitName)))
+        .map(normalizeUsbDeviceClosure(traitName)))
         .then(items => items.filter(item => item));
 }
 
 
 export function reenumerateUsb() {
     debug('Reenumerating all USB devices...');
-    return genericReenumerateUsb(() => true, () => true, 'usb');
+    return genericReenumerateUsb('usb');
 }
 
 
 // Like reenumerateUsb, but cares only about USB devices with the Segger VendorId (0x1366)
-function filterSeggerVendorId(device) {
-    return device.deviceDescriptor.idVendor === SEGGER_VENDOR_ID;
-}
 export function reenumerateSeggerUsb() {
     debug('Reenumerating all Segger USB devices...');
-    return genericReenumerateUsb(filterSeggerVendorId, () => true, 'seggerUsb');
+    return genericReenumerateUsb('seggerUsb', SEGGER_VENDOR_ID);
 }
-
 
 // Like reenumerateUsb, but cares only about USB devices with the Nordic VendorId (0x1915)
-function filterNordicVendorId(device) {
-    return device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID;
-}
 export function reenumerateNordicUsb() {
     debug('Reenumerating all Nordic USB devices...');
-    return genericReenumerateUsb(filterNordicVendorId, () => true, 'nordicUsb');
+    return genericReenumerateUsb('nordicUsb', NORDIC_VENDOR_ID);
 }
 
-// Like reenumerateUsb, but cares only about USB devices with the Nordic VendorId (0x1915)
-// and a DFU trigger interface
-function filterDfuTrigger(device) {
-    return device.interfaces.some(iface => (
-        iface.descriptor.bInterfaceClass === 255 &&
-            iface.descriptor.bInterfaceSubClass === 1 &&
-            iface.descriptor.bInterfaceProtocol === 1
-    ));
-}
 export function reenumerateNordicDfuTrigger() {
     debug('Reenumerating all Nordic USB devices with DFU trigger interface...');
-    return genericReenumerateUsb(filterNordicVendorId, filterDfuTrigger, 'nordicDfu');
+    return genericReenumerateUsb('nordicDfu', NORDIC_VENDOR_ID)
+        .then(items => items.filter(item => item.nordicDfu.nordicDfuTrigger));
+}
+
+function removeCachedDevice(device) {
+    const deviceId = getDeviceId(device);
+    debug('Removing from cache:', deviceId);
+    cachedDevices.delete(deviceId);
+}
+
+export function startCache() {
+    isCacheEnabled = true;
+    Usb.on('detach', removeCachedDevice);
+}
+
+export function stopCache() {
+    isCacheEnabled = false;
+    Usb.removeListener('detach', removeCachedDevice);
+    cachedDevices.clear();
 }
