@@ -70,34 +70,15 @@ const lister = new DeviceLister({
     jlink: args.jlink,
 });
 
-// Aux function to prettify USB vendor/product IDs
-function hexpad4(number) {
-    return `0x${number.toString(16).padStart(4, '0')}`;
-}
-
-lister.on('error', trait => {
-    const filteredKey = Object.keys(trait).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-    if (filteredKey === 'usb') {
-        const { idVendor, idProduct } = trait.usb.device.deviceDescriptor;
-        console.error(
-            'usb error when enumerating USB device with VID/PID',
-            hexpad4(idVendor), '/', hexpad4(idProduct),
-            ':', trait.error.message
-        );
-    } else if (filteredKey === 'jlink') {
-        console.error('jprog/jlink error: ', trait.error);
-    } else {
-        console.error(filteredKey, 'error', trait.error.message);
-    }
+lister.on('error', error => {
+    console.error(error.message);
 });
 
-lister.on('noserialnumber', trait => {
-    const filteredKey = Object.keys(trait).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-
-    if (filteredKey === 'serialport') {
-        console.error('no serial number for serial port', trait.serialport.comName);
+lister.on('noserialnumber', result => {
+    if (result.traits.includes('serialport')) {
+        console.error('no serial number for serial port', result.serialport.comName);
     } else {
-        console.error('noserialnumber', trait);
+        console.error('noserialnumber', result);
     }
 });
 
@@ -105,8 +86,7 @@ lister.on('conflated', deviceMap => {
     // Pretty-print some info
     console.log('Received update:');
     deviceMap.forEach((device, serialNumber) => {
-        const keys = Object.keys(device).filter(key => key !== 'error' && key !== 'serialNumber');
-        console.log(serialNumber, keys);
+        console.log(serialNumber, device.traits);
     });
     console.log();
 });

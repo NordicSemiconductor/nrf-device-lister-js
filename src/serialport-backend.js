@@ -31,6 +31,7 @@
 
 import SerialPort from 'serialport';
 import Debug from 'debug';
+import AbstractBackend from './abstract-backend';
 
 const debug = Debug('device-lister:serialport');
 
@@ -64,31 +65,35 @@ const debug = Debug('device-lister:serialport');
  *
  */
 
-export default function reenumerateSerialPort() {
-    debug('Reenumerating...');
-    return new Promise((res, rej) => {
-        SerialPort.list((err, portsMetadata) => {
+function getSerialPorts() {
+    return new Promise((resolve, reject) => {
+        SerialPort.list((err, ports) => {
             if (err) {
-                rej(err);
+                reject(err);
             } else {
-                res(portsMetadata);
+                resolve(ports);
             }
         });
-    }).then(portsMetadata => portsMetadata.map(portMetadata => {
-        debug('Enumerated: ', portMetadata.comName, portMetadata.serialNumber);
-
-        return {
-            error: undefined,
-            serialNumber: portMetadata.serialNumber,
-            serialport: portMetadata,
-        };
-    })).catch(err => {
-        debug('Error! ', err);
-
-        return [{
-            error: err,
-            serialNumber: undefined,
-            serialport: undefined,
-        }];
     });
+}
+
+export default class SerialPortBackend extends AbstractBackend {
+    /* eslint-disable-next-line class-methods-use-this */
+    reenumerate() {
+        debug('Reenumerating...');
+        return getSerialPorts()
+            .then(ports => (
+                ports.map(port => {
+                    debug('Enumerated:', port.comName, port.serialNumber);
+                    return {
+                        serialNumber: port.serialNumber,
+                        serialport: port,
+                        traits: ['serialport'],
+                    };
+                })
+            )).catch(error => {
+                debug('Error:', error);
+                this.emit('error', error);
+            });
+    }
 }

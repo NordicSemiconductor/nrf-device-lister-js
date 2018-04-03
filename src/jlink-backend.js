@@ -31,6 +31,7 @@
 
 import nrfjprogjs from 'pc-nrfjprog-js';
 import Debug from 'debug';
+import AbstractBackend from './abstract-backend';
 
 const debug = Debug('device-lister:jlink');
 
@@ -61,29 +62,34 @@ const debug = Debug('device-lister:jlink');
  *
  */
 
-export default function reenumerateJlinks() {
-    debug('Reenumerating...');
-    return new Promise((res, rej) => {
-        nrfjprogjs.getSerialNumbers((err, serialnumbers) => {
-            if (err) {
-                rej(err);
-            } else {
-                res(serialnumbers);
-            }
+export default class JlinkBackend extends AbstractBackend {
+    /* eslint-disable-next-line class-methods-use-this */
+    reenumerate() {
+        debug('Reenumerating...');
+        return new Promise((res, rej) => {
+            nrfjprogjs.getSerialNumbers((err, serialnumbers) => {
+                if (err) {
+                    rej(err);
+                } else {
+                    res(serialnumbers);
+                }
+            });
+        }).then(serialnumbers => serialnumbers.map(serialnumber => {
+            debug('Enumerated:', serialnumber);
+            return {
+                error: undefined,
+                serialNumber: serialnumber,
+                jlink: true,
+                traits: ['jlink'],
+            };
+        })).catch(err => {
+            debug('Returning error!', err.errmsg);
+            return [{
+                error: err,
+                serialNumber: undefined,
+                jlink: undefined,
+                traits: [],
+            }];
         });
-    }).then(serialnumbers => serialnumbers.map(serialnumber => {
-        debug('Enumerated:', serialnumber);
-        return {
-            error: undefined,
-            serialNumber: serialnumber,
-            jlink: true,
-        };
-    })).catch(err => {
-        debug('Returning error!', err.errmsg);
-        return [{
-            error: err,
-            serialNumber: undefined,
-            jlink: undefined,
-        }];
-    });
+    }
 }
