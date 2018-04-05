@@ -29,6 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+import Debug from 'debug';
+const debug = Debug('device-lister:usb');
+
 /**
  * Perform a control transfer to get a string descriptor from an already
  * open usb device.
@@ -73,12 +76,25 @@ export function getStringDescriptors(device, indexes) {
  * @param {Object} device The usb device to open.
  * @returns {Promise} Promise that resolves if successful, rejects if failed.
  */
-export function openDevice(device) {
+export function openDevice(device, retries = 0) {
     return new Promise((res, rej) => {
         try {
             device.open();
         } catch (error) {
-            return rej(error);
+            if (process.platform === "win32" &&
+                retries < 5 &&
+                error.message === "LIBUSB_ERROR_ACCESS")
+            {
+                // In win platforms, the winUSB driver might allow only one
+                // process to access the USB device, potentially creating
+                // race conditions. Mitigate this with an auto-retry mechanism.
+                debug('Got LIBUSB_ERROR_ACCESS on win32, retrying (attempt ' + retries + ')...');
+                setTimeout(()=>{
+                    res(openDevice(device, retries + 1));
+                }, (50 * retries * retries) + (100 * Math.random()));
+            } else {
+                return rej(error);
+            }
         }
         return res();
     });
