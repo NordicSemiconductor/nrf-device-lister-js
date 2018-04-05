@@ -35,35 +35,6 @@ import AbstractBackend from './abstract-backend';
 
 const debug = Debug('device-lister:serialport');
 
-/* Returns a Promise to a list of objects, like:
- *
- * [{
- *   error: undefined
- *   serialNumber: 1234,
- *   serialport: {
- *      comName: 'COM3',
- *      manufacturer: 'Arduino LLC (www.arduino.cc)',
- *      serialNumber: '752303138333518011C1',
- *      pnpId: 'USB\\VID_2341&PID_0043\\752303138333518011C1',
- *      locationId: 'Port_#0003.Hub_#0001',
- *      productId: '0043',
- *      vendorId: '2341',
- *      //serialport: (instance of SerialPort),         // Maybe???
- *   }
- * }]
- *
- * See https://doclets.io/node-serialport/node-serialport/master#dl-SerialPort-list
- *
- * If there were any errors while enumerating serial ports, the array will contain only
- * one item like:
- *
- * [{
- *   error: (instance of Error)
- *   serialNumber: undefined,
- *   serialport: undefined
- * }]
- *
- */
 
 function getSerialPorts() {
     return new Promise((resolve, reject) => {
@@ -78,7 +49,28 @@ function getSerialPorts() {
 }
 
 export default class SerialPortBackend extends AbstractBackend {
-    /* eslint-disable-next-line class-methods-use-this */
+    /* Returns a Promise to a list of objects, like:
+     *
+     * [{
+     *   traits: 'serialport'
+     *   serialNumber: 1234,
+     *   serialport: {
+     *      comName: 'COM3',
+     *      manufacturer: 'Arduino LLC (www.arduino.cc)',
+     *      serialNumber: '752303138333518011C1',
+     *      pnpId: 'USB\\VID_2341&PID_0043\\752303138333518011C1',
+     *      locationId: 'Port_#0003.Hub_#0001',
+     *      productId: '0043',
+     *      vendorId: '2341',
+     *      //serialport: (instance of SerialPort),         // Maybe???
+     *   }
+     * }]
+     *
+     * See https://doclets.io/node-serialport/node-serialport/master#dl-SerialPort-list
+     *
+     * If there were any errors while enumerating serial ports, it will return
+     * an array with just one error item, as per the AbstractBackend format.
+     */
     reenumerate() {
         debug('Reenumerating...');
         return getSerialPorts()
@@ -93,7 +85,10 @@ export default class SerialPortBackend extends AbstractBackend {
                 })
             )).catch(error => {
                 debug('Error:', error);
-                this.emit('error', error);
+                return [{
+                    error: error,
+                    errorSource: 'serialport'
+                }];
             });
     }
 }

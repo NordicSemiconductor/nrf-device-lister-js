@@ -71,7 +71,7 @@ const lister = new DeviceLister({
 });
 
 lister.on('error', error => {
-    console.error(error.message);
+//     console.error(error.message);
 });
 
 lister.on('noserialnumber', result => {

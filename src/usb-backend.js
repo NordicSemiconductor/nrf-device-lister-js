@@ -64,6 +64,13 @@ function getMatchingDeviceFilters(device, filters) {
  * Backend that enumerates usb devices.
  */
 export default class UsbBackend extends AbstractBackend {
+    /*
+     * The constructor takes in two sets of filters. These must be objects,
+     * with strings as keys and functions as values. These functions must
+     * take an instance of a USB `Device` (closed or open, respectively)
+     * and return either a truthy or a falsy value.
+     *
+     */
     constructor(closedDeviceFilters = {}, openDeviceFilters = {}) {
         super();
         this._closedDeviceFilters = closedDeviceFilters;
@@ -79,6 +86,23 @@ export default class UsbBackend extends AbstractBackend {
         this._cachedResults.delete(deviceId);
     }
 
+    /* Given an instance of a USB `Device`, returns a `Promise` to *one*
+     * structure like:
+     *
+     * {
+     *   traits: ['usb']
+     *   serialNumber: 1234,
+     *   usb: {
+     *      serialNumber: 1234,
+     *      manufacturer: 'Arduino LLC (www.arduino.cc)',
+     *      product: 'Development board model something'
+     *      device: (instance of usb's Device)
+     *   }
+     * }
+     *
+     * If the USB `Device` does not match any of the filters given to the
+     * class constructor, this will return a `Promise` to a falsy value instead.
+     */
     _getResult(device) {
         const deviceId = getDeviceId(device);
         if (this._cachedResults.has(deviceId)) {
@@ -86,7 +110,7 @@ export default class UsbBackend extends AbstractBackend {
             return this._cachedResults.get(deviceId);
         }
 
-        const result = {
+        let result = {
             serialNumber: undefined,
             usb: {
                 serialNumber: undefined,
@@ -124,17 +148,25 @@ export default class UsbBackend extends AbstractBackend {
                     });
                 }).catch(error => {
                     debug('Error when reading device:', deviceId, error);
-                    this.emit('error', error);
+                    result = {
+                        error: error,
+                        errorSource: deviceId
+                    }
                 }).then(() => {
                     // Clean up
                     try {
                         device.close();
                     } catch (error) {
                         debug('Error when closing device:', deviceId, error);
-                        this.emit('error', error);
+                        if (!result.error) {
+                            result = {
+                                error: error,
+                                errorSource: deviceId
+                            }
+                        }
                     }
                     debug('Releasing mutex.');
-                    if (result.traits.length === 0) {
+                    if (result.traits && result.traits.length === 0) {
                         debug('No matching filters for device:', deviceId);
                         return null;
                     }
@@ -145,6 +177,24 @@ export default class UsbBackend extends AbstractBackend {
         });
     }
 
+    /* Returns a `Promise` to an array of objects, like:
+     *
+     * [{
+     *   traits: ['usb', 'nordicUsb']
+     *   serialNumber: 1234,
+     *   usb: {
+     *      serialNumber: 1234,
+     *      manufacturer: 'Arduino LLC (www.arduino.cc)',
+     *      product: 'Development board model something'
+     *      device: (instance of usb's Device)
+     *   }
+     * }]
+     *
+     * See https://doclets.io/node-serialport/node-serialport/master#dl-SerialPort-list
+     *
+     * If there were any errors while enumerating usb devices, the array will
+     * contain them, as per the AbstractBackend format.
+     */
     reenumerate() {
         debug('Reenumerating...');
         return Promise.all(Usb.getDeviceList().map(device => this._getResult(device)))

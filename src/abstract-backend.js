@@ -31,9 +31,8 @@
 
 import EventEmitter from 'events';
 
-export default class AbstractBackend extends EventEmitter {
+export default class AbstractBackend {
     constructor() {
-        super();
         if (this.constructor === AbstractBackend) {
             throw new Error('Cannot instantiate AbstractBackend.');
         }
@@ -42,6 +41,30 @@ export default class AbstractBackend extends EventEmitter {
     /* eslint-disable-next-line class-methods-use-this */
     close() { }
 
+    /* Implementations must returns a `Promise` to an array of objects, like:
+     *
+     * [{
+     *   traits: ['foo', 'bar']
+     *   serialNumber: 1234,
+     *   backendData: {
+     *      serialNumber: 1234,
+     *      manufacturer: 'Arduino LLC (www.arduino.cc)',
+     *      devNode: '/dev/foobar'
+     *   }
+     * },{
+     *   error: new Error(...),
+     *   errorSource: ...
+     * }]
+     *
+     * These objects can either be devices with traits known by a specific
+     * backend, or errors that the backend wants to raise up.
+     *
+     * Devices with traits *must* have the `traits` and `serialNumber` properties,
+     * plus an optional property containing backend-specific data.
+     *
+     * Errors are synchronously raised upwards to the conflater, and must include
+     * a unique identifier for the source/reason of the error:
+     */
     reenumerate() {
         throw new Error(`Reenumerate must be implemented in ${this.constructor.name}`);
     }

@@ -70,11 +70,13 @@ export default class DeviceLister extends EventEmitter {
             );
         }
         if (nordicDfu) {
-            usbDeviceOpenFilters.nordicDfu = device => device.interfaces.some(iface => (
-                iface.descriptor.bInterfaceClass === 255 &&
-                iface.descriptor.bInterfaceSubClass === 1 &&
-                iface.descriptor.bInterfaceProtocol === 1
-            ));
+            usbDeviceOpenFilters.nordicDfu = device =>
+                device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID && device.interfaces.some(iface => (
+                    iface.descriptor.bInterfaceClass === 255 &&
+                    iface.descriptor.bInterfaceSubClass === 1 &&
+                    iface.descriptor.bInterfaceProtocol === 1
+                )
+            );
         }
 
         if (Object.keys(usbDeviceClosedFilters).length > 0 ||
@@ -84,9 +86,9 @@ export default class DeviceLister extends EventEmitter {
         if (serialport) { this._backends.push(new SerialPortBackend()); }
         if (jlink) { this._backends.push(new JlinkBackend()); }
 
-        this._backends.forEach(backend => {
-            backend.on('error', error => console.log(error));
-        });
+//         this._backends.forEach(backend => {
+//             backend.on('error', error => debug(error.message));
+//         });
 
         this._boundReenumerate = this.reenumerate.bind(this);
     }
@@ -155,6 +157,11 @@ export default class DeviceLister extends EventEmitter {
                         device.traits = result.traits.concat(traits);
                     }
                     deviceMap.set(serialNumber, device);
+                } else if (result.errorSource) {
+                    if (!this._currentErrors.has(result.errorSource)) {
+                        this.emit('error', result.error);
+                    }
+                    newErrors.add(result.errorSource);
                 }
             });
         });
