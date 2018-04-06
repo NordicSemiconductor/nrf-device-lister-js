@@ -36,7 +36,6 @@ import AbstractBackend from './abstract-backend';
 const debug = Debug('device-lister:jlink');
 
 export default class JlinkBackend extends AbstractBackend {
-
     /* Returns a `Promise` to a list of objects, like:
      *
      * [{
@@ -76,7 +75,7 @@ export default class JlinkBackend extends AbstractBackend {
             debug('Error:', err.errmsg);
             return [{
                 error: err,
-                errorSource: 'jlink'
+                errorSource: 'jlink',
             }];
         });
     }

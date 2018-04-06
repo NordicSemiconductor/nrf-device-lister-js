@@ -30,6 +30,7 @@
  */
 
 import Debug from 'debug';
+
 const debug = Debug('device-lister:usb');
 
 /**
@@ -81,15 +82,14 @@ export function openDevice(device, retries = 0) {
         try {
             device.open();
         } catch (error) {
-            if (process.platform === "win32" &&
+            if (process.platform === 'win32' &&
                 retries < 5 &&
-                error.message === "LIBUSB_ERROR_ACCESS")
-            {
+                error.message === 'LIBUSB_ERROR_ACCESS') {
                 // In win platforms, the winUSB driver might allow only one
                 // process to access the USB device, potentially creating
                 // race conditions. Mitigate this with an auto-retry mechanism.
-                debug('Got LIBUSB_ERROR_ACCESS on win32, retrying (attempt ' + retries + ')...');
-                setTimeout(()=>{
+                debug(`Got LIBUSB_ERROR_ACCESS on win32, retrying (attempt ${retries})...`);
+                setTimeout(() => {
                     res(openDevice(device, retries + 1));
                 }, (50 * retries * retries) + (100 * Math.random()));
             } else {

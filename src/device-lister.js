@@ -71,12 +71,12 @@ export default class DeviceLister extends EventEmitter {
         }
         if (nordicDfu) {
             usbDeviceOpenFilters.nordicDfu = device =>
-                device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID && device.interfaces.some(iface => (
+                device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID &&
+                device.interfaces.some(iface => (
                     iface.descriptor.bInterfaceClass === 255 &&
                     iface.descriptor.bInterfaceSubClass === 1 &&
                     iface.descriptor.bInterfaceProtocol === 1
-                )
-            );
+                ));
         }
 
         if (Object.keys(usbDeviceClosedFilters).length > 0 ||
@@ -86,9 +86,9 @@ export default class DeviceLister extends EventEmitter {
         if (serialport) { this._backends.push(new SerialPortBackend()); }
         if (jlink) { this._backends.push(new JlinkBackend()); }
 
-//         this._backends.forEach(backend => {
-//             backend.on('error', error => debug(error.message));
-//         });
+        //         this._backends.forEach(backend => {
+        //             backend.on('error', error => debug(error.message));
+        //         });
 
         this._boundReenumerate = this.reenumerate.bind(this);
     }
@@ -162,6 +162,8 @@ export default class DeviceLister extends EventEmitter {
                         this.emit('error', result.error);
                     }
                     newErrors.add(result.errorSource);
+                } else {
+                    throw new Error(`Received neither serial number nor error! ${result}`);
                 }
             });
         });

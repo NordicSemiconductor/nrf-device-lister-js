@@ -29,8 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import EventEmitter from 'events';
-
 export default class AbstractBackend {
     constructor() {
         if (this.constructor === AbstractBackend) {
@@ -53,7 +51,7 @@ export default class AbstractBackend {
      *   }
      * },{
      *   error: new Error(...),
-     *   errorSource: ...
+     *   errorSource: "Unique-ID-for-the-error-source"
      * }]
      *
      * These objects can either be devices with traits known by a specific
@@ -63,7 +61,7 @@ export default class AbstractBackend {
      * plus an optional property containing backend-specific data.
      *
      * Errors are synchronously raised upwards to the conflater, and must include
-     * a unique identifier for the source/reason of the error:
+     * a unique identifier for the source/reason of the error.
      */
     reenumerate() {
         throw new Error(`Reenumerate must be implemented in ${this.constructor.name}`);

@@ -71,14 +71,15 @@ const lister = new DeviceLister({
 });
 
 lister.on('error', error => {
-//     console.error(error.message);
-});
-
-lister.on('noserialnumber', result => {
-    if (result.traits.includes('serialport')) {
-        console.error('no serial number for serial port', result.serialport.comName);
+    if (error.usb) {
+        console.error(`Error from USB device VID/PID 0x${
+            error.usb.deviceDescriptor.idVendor.toString(16).padStart(4, '0')}/0x${
+            error.usb.deviceDescriptor.idProduct.toString(16).padStart(4, '0')}: ${
+            error.message}`);
+    } else if (error.serialport) {
+        console.error(`Error from a serial port at ${error.serialport.comName}: `, error.message);
     } else {
-        console.error('noserialnumber', result);
+        console.error(error);
     }
 });
 

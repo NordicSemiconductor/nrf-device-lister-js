@@ -70,24 +70,36 @@ export default class SerialPortBackend extends AbstractBackend {
      *
      * If there were any errors while enumerating serial ports, it will return
      * an array with just one error item, as per the AbstractBackend format.
+     *
+     * Serial ports without serial numbers will be converted into an error item
+     * each, as per the AbstractBackend format.
      */
+    /* eslint-disable-next-line class-methods-use-this */
     reenumerate() {
         debug('Reenumerating...');
         return getSerialPorts()
             .then(ports => (
                 ports.map(port => {
                     debug('Enumerated:', port.comName, port.serialNumber);
+                    if (port.serialNumber !== undefined) {
+                        return {
+                            serialNumber: port.serialNumber,
+                            serialport: port,
+                            traits: ['serialport'],
+                        };
+                    }
+                    const err = new Error(`Could not fetch serial number for serial port at ${port.comName}`);
+                    err.serialport = port;
                     return {
-                        serialNumber: port.serialNumber,
-                        serialport: port,
-                        traits: ['serialport'],
+                        error: err,
+                        errorSource: `serialport-${port.comName}`,
                     };
                 })
             )).catch(error => {
                 debug('Error:', error);
                 return [{
-                    error: error,
-                    errorSource: 'serialport'
+                    error,
+                    errorSource: 'serialport',
                 }];
             });
     }

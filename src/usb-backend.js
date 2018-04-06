@@ -147,22 +147,26 @@ export default class UsbBackend extends AbstractBackend {
                         result.traits = result.traits.concat(traits);
                     });
                 }).catch(error => {
-                    debug('Error when reading device:', deviceId, error);
+                    debug('Error when reading device:', deviceId, error.message);
+                    const err = error;
+                    err.usb = device;
                     result = {
-                        error: error,
-                        errorSource: deviceId
-                    }
+                        error: err,
+                        errorSource: deviceId,
+                    };
                 }).then(() => {
                     // Clean up
                     try {
                         device.close();
                     } catch (error) {
-                        debug('Error when closing device:', deviceId, error);
+                        debug('Error when closing device:', deviceId, error.message);
                         if (!result.error) {
+                            const err = error;
+                            err.usb = device;
                             result = {
-                                error: error,
-                                errorSource: deviceId
-                            }
+                                error: err,
+                                errorSource: deviceId,
+                            };
                         }
                     }
                     debug('Releasing mutex.');
