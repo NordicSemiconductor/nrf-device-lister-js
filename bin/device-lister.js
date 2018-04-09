@@ -93,12 +93,9 @@ lister.on('conflated', deviceMap => {
 });
 
 
-lister.start();
-
-if (!args.watch) {
-    // Kinda counter-intuitive: the default for the library is to keep running
-    // so if *no* --watch parameter has been passed, make it stop.
-    setTimeout(() => {
-        lister.stop();
-    }, 100);
+if (args.watch) {
+    lister.start();
+} else {
+    lister.reenumerate();
 }
+

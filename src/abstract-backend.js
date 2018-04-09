@@ -36,8 +36,15 @@ export default class AbstractBackend {
         }
     }
 
+    /*
+     * Implementations can optionally run some code whenever the device lister
+     * starts and stops listening for changes.
+     */
     /* eslint-disable-next-line class-methods-use-this */
-    close() { }
+    start() {}
+
+    /* eslint-disable-next-line class-methods-use-this */
+    stop() {}
 
     /* Implementations must returns a `Promise` to an array of objects, like:
      *

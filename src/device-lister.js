@@ -86,10 +86,6 @@ export default class DeviceLister extends EventEmitter {
         if (serialport) { this._backends.push(new SerialPortBackend()); }
         if (jlink) { this._backends.push(new JlinkBackend()); }
 
-        //         this._backends.forEach(backend => {
-        //             backend.on('error', error => debug(error.message));
-        //         });
-
         this._boundReenumerate = this.reenumerate.bind(this);
     }
 
@@ -98,6 +94,9 @@ export default class DeviceLister extends EventEmitter {
 
         Usb.on('attach', this._boundReenumerate);
         Usb.on('detach', this._boundReenumerate);
+
+        this._backends.forEach(backend => backend.start());
+
         this.reenumerate();
     }
 
@@ -106,7 +105,7 @@ export default class DeviceLister extends EventEmitter {
     stop() {
         debug('Removing event listeners for USB attach/detach');
 
-        this._backends.forEach(backend => backend.close());
+        this._backends.forEach(backend => backend.stop());
 
         Usb.removeListener('attach', this._boundReenumerate);
         Usb.removeListener('detach', this._boundReenumerate);
@@ -124,14 +123,12 @@ export default class DeviceLister extends EventEmitter {
 
         const pendings = this._backends.map(backend => backend.reenumerate());
 
-        Promise.all(pendings).then(backendsResult => {
-            this._conflate(backendsResult);
+        return Promise.all(pendings).then(backendsResult => {
+            return this._conflate(backendsResult);
         }).catch(err => {
             debug('Error after reenumerating: ', err);
             this.emit('error', err);
         });
-
-        return pendings;
     }
 
     _conflate(backendsResult) {
@@ -173,5 +170,6 @@ export default class DeviceLister extends EventEmitter {
         debug(`Conflated. Now ${Array.from(deviceMap).length} devices with known serial number and ${Array.from(this._currentErrors).length} without.`);
         this._currentDevices = deviceMap;
         this.emit('conflated', deviceMap);
+        return deviceMap;
     }
 }

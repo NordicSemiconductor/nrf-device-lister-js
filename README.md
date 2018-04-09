@@ -43,7 +43,7 @@ var lister = new DeviceLister({
 // The 'conflated' event fires whenever there is a new conflated list of
 // devices (i.e. after each reenumeration). This list is an instance of Map,
 // with the serial number of each device as the keys.
-// Each device has a list of the traits shown.
+// Each device has a list of the traits that devices shows.
 // USB devices have a minimal data structure containing a Device instance,
 // as per the 'usb' module. Serial port devices have the metadata structure
 // returned by the 'list()' function of the 'serialport' module. J-link probes
@@ -102,6 +102,14 @@ lister.on('error', function(err){
             err.serialport.comName
         );
     }
+});
+
+
+// Ask for *one* enumeration of devices. Result is a Promise for a map of devices,
+// just like the parameter for the handler of the `conflated` event.
+// Note that calling reenumerate() will also trigger *one* `conflated` event.
+lister.reenumerate().then(function(deviceMap){
+    // ...iterate through deviceMap and do something...
 });
 
 

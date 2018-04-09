@@ -77,7 +77,6 @@ export default class UsbBackend extends AbstractBackend {
         this._openDeviceFilters = openDeviceFilters;
         this._cachedResults = new Map();
         this._boundRemoveCachedResult = this._removeCachedResult.bind(this);
-        Usb.on('detach', this._boundRemoveCachedResult);
     }
 
     _removeCachedResult(device) {
@@ -205,7 +204,11 @@ export default class UsbBackend extends AbstractBackend {
             .then(results => results.filter(result => result));
     }
 
-    close() {
+    start() {
+        Usb.on('detach', this._boundRemoveCachedResult);
+    }
+
+    stop() {
         Usb.removeListener('detach', this._boundRemoveCachedResult);
     }
 }
