@@ -52,8 +52,8 @@ export default class DeviceLister extends EventEmitter {
         this._currentErrors = new Set();
 
         // State for throttling down reenumerations
-        this._activeReenumeration = false;  // Promise or false
-        this._queuedReenumeration = false;  // Boolean
+        this._activeReenumeration = false; // Promise or false
+        this._queuedReenumeration = false; // Boolean
 
 
         this._backends = [];
@@ -129,9 +129,7 @@ export default class DeviceLister extends EventEmitter {
 
         const pendings = this._backends.map(backend => backend.reenumerate());
 
-        return Promise.all(pendings).then(backendsResult => {
-            return this._conflate(backendsResult);
-        }).catch(err => {
+        return Promise.all(pendings).then(backendsResult => this._conflate(backendsResult)).catch(err => {
             debug('Error after reenumerating: ', err);
             this.emit('error', err);
         });
@@ -144,30 +142,29 @@ export default class DeviceLister extends EventEmitter {
     // will be queued and delayed until the active one is finished, the rest
     // will be silently ignored.
     _triggerReenumeration(usbDevice) {
-
         debug(`Called _triggerReenumeration because of added/removed USB device VID/PID 0x${
             usbDevice.deviceDescriptor.idVendor.toString(16).padStart(4, '0')}/0x${
             usbDevice.deviceDescriptor.idProduct.toString(16).padStart(4, '0')}`);
 
         if (!this._activeReenumeration) {
-            debug(`Calling reenumerate().`);
-            this._activeReenumeration = this.reenumerate().then(()=>{
+            debug('Calling reenumerate().');
+            this._activeReenumeration = this.reenumerate().then(() => {
                 this._activeReenumeration = false;
             });
         } else if (!this._queuedReenumeration) {
-            debug(`Queuing one reenumeration.`);
+            debug('Queuing one reenumeration.');
             this._queuedReenumeration = true;
 
-            this._activeReenumeration.then(()=>{
-                debug(`Previous reenumeration done, triggering queued one.`);
+            this._activeReenumeration.then(() => {
+                debug('Previous reenumeration done, triggering queued one.');
 
-                this._activeReenumeration = this.reenumerate().then(()=>{
+                this._activeReenumeration = this.reenumerate().then(() => {
                     this._activeReenumeration = false;
                 });
                 this._queuedReenumeration = false;
             });
         } else {
-            debug(`Skipping spurious reenumeration request.`);
+            debug('Skipping spurious reenumeration request.');
         }
     }
 
