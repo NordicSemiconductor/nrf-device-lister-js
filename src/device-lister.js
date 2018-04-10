@@ -129,10 +129,12 @@ export default class DeviceLister extends EventEmitter {
 
         const pendings = this._backends.map(backend => backend.reenumerate());
 
-        return Promise.all(pendings).then(backendsResult => this._conflate(backendsResult)).catch(err => {
-            debug('Error after reenumerating: ', err);
-            this.emit('error', err);
-        });
+        return Promise.all(pendings)
+            .then(backendsResult => this._conflate(backendsResult))
+            .catch(err => {
+                debug('Error after reenumerating: ', err);
+                this.emit('error', err);
+            });
     }
 
 
