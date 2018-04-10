@@ -81,6 +81,7 @@ export function openDevice(device, retries = 0) {
     return new Promise((res, rej) => {
         try {
             device.open();
+            res();
         } catch (error) {
             if (process.platform === 'win32' &&
                 retries < 5 &&
@@ -93,10 +94,9 @@ export function openDevice(device, retries = 0) {
                     res(openDevice(device, retries + 1));
                 }, (50 * retries * retries) + (100 * Math.random()));
             } else {
-                return rej(error);
+                rej(error);
             }
         }
-        return res();
     });
 }
 
