@@ -70,34 +70,16 @@ const lister = new DeviceLister({
     jlink: args.jlink,
 });
 
-// Aux function to prettify USB vendor/product IDs
-function hexpad4(number) {
-    return `0x${number.toString(16).padStart(4, '0')}`;
-}
-
-lister.on('error', trait => {
-    const filteredKey = Object.keys(trait).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-    if (filteredKey === 'usb') {
-        const { idVendor, idProduct } = trait.usb.device.deviceDescriptor;
-        console.error(
-            'usb error when enumerating USB device with VID/PID',
-            hexpad4(idVendor), '/', hexpad4(idProduct),
-            ':', trait.error.message
-        );
-    } else if (filteredKey === 'jlink') {
-        console.error('jprog/jlink error: ', trait.error);
+lister.on('error', error => {
+    if (error.usb) {
+        console.error(`Error from USB device VID/PID 0x${
+            error.usb.deviceDescriptor.idVendor.toString(16).padStart(4, '0')}/0x${
+            error.usb.deviceDescriptor.idProduct.toString(16).padStart(4, '0')}: ${
+            error.message}`);
+    } else if (error.serialport) {
+        console.error(`Error from a serial port at ${error.serialport.comName}: `, error.message);
     } else {
-        console.error(filteredKey, 'error', trait.error.message);
-    }
-});
-
-lister.on('noserialnumber', trait => {
-    const filteredKey = Object.keys(trait).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-
-    if (filteredKey === 'serialport') {
-        console.error('no serial number for serial port', trait.serialport.comName);
-    } else {
-        console.error('noserialnumber', trait);
+        console.error(error);
     }
 });
 
@@ -105,19 +87,15 @@ lister.on('conflated', deviceMap => {
     // Pretty-print some info
     console.log('Received update:');
     deviceMap.forEach((device, serialNumber) => {
-        const keys = Object.keys(device).filter(key => key !== 'error' && key !== 'serialNumber');
-        console.log(serialNumber, keys);
+        console.log(serialNumber, device.traits);
     });
     console.log();
 });
 
 
-lister.start();
-
-if (!args.watch) {
-    // Kinda counter-intuitive: the default for the library is to keep running
-    // so if *no* --watch parameter has been passed, make it stop.
-    setTimeout(() => {
-        lister.stop();
-    }, 100);
+if (args.watch) {
+    lister.start();
+} else {
+    lister.reenumerate();
 }
+

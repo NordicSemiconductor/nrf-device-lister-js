@@ -32,13 +32,14 @@
 import EventEmitter from 'events';
 import Usb from 'usb';
 import Debug from 'debug';
-import { inspect } from 'util';
-
-import { reenumerateUsb, reenumerateSeggerUsb, reenumerateNordicUsb, reenumerateNordicDfuTrigger } from './usb-backend';
-import reenumerateSerialPort from './serialport-backend';
-import reenumerateJlink from './jlink-backend';
+import UsbBackend from './usb-backend';
+import SerialPortBackend from './serialport-backend';
+import JlinkBackend from './jlink-backend';
 
 const debug = Debug('device-lister:conflater');
+
+const SEGGER_VENDOR_ID = 0x1366;
+const NORDIC_VENDOR_ID = 0x1915;
 
 export default class DeviceLister extends EventEmitter {
     constructor(traits = {}) {
@@ -46,8 +47,14 @@ export default class DeviceLister extends EventEmitter {
 
         debug('Instantiating DeviceLister with traits:', traits);
 
+        // Caches
         this._currentDevices = new Map();
         this._currentErrors = new Set();
+
+        // State for throttling down reenumerations
+        this._activeReenumeration = false; // Promise or false
+        this._queuedReenumeration = false; // Boolean
+
 
         this._backends = [];
 
@@ -55,14 +62,37 @@ export default class DeviceLister extends EventEmitter {
             usb, nordicUsb, nordicDfu, seggerUsb, jlink, serialport,
         } = traits;
 
-        if (usb) { this._backends.push(reenumerateUsb); }
-        if (nordicUsb) { this._backends.push(reenumerateNordicUsb); }
-        if (nordicDfu) { this._backends.push(reenumerateNordicDfuTrigger); }
-        if (seggerUsb) { this._backends.push(reenumerateSeggerUsb); }
-        if (serialport) { this._backends.push(reenumerateSerialPort); }
-        if (jlink) { this._backends.push(reenumerateJlink); }
+        const usbDeviceClosedFilters = {};
+        const usbDeviceOpenFilters = {};
+        if (usb) { usbDeviceClosedFilters.usb = () => true; }
+        if (nordicUsb) {
+            usbDeviceClosedFilters.nordicUsb = device => (
+                device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID
+            );
+        }
+        if (seggerUsb) {
+            usbDeviceClosedFilters.seggerUsb = device => (
+                device.deviceDescriptor.idVendor === SEGGER_VENDOR_ID
+            );
+        }
+        if (nordicDfu) {
+            usbDeviceOpenFilters.nordicDfu = device =>
+                device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID &&
+                device.interfaces.some(iface => (
+                    iface.descriptor.bInterfaceClass === 255 &&
+                    iface.descriptor.bInterfaceSubClass === 1 &&
+                    iface.descriptor.bInterfaceProtocol === 1
+                ));
+        }
 
-        this._boundReenumerate = this.reenumerate.bind(this);
+        if (Object.keys(usbDeviceClosedFilters).length > 0 ||
+            Object.keys(usbDeviceOpenFilters).length > 0) {
+            this._backends.push(new UsbBackend(usbDeviceClosedFilters, usbDeviceOpenFilters));
+        }
+        if (serialport) { this._backends.push(new SerialPortBackend()); }
+        if (jlink) { this._backends.push(new JlinkBackend()); }
+
+        this._boundReenumerate = this._triggerReenumeration.bind(this);
     }
 
     start() {
@@ -70,6 +100,9 @@ export default class DeviceLister extends EventEmitter {
 
         Usb.on('attach', this._boundReenumerate);
         Usb.on('detach', this._boundReenumerate);
+
+        this._backends.forEach(backend => backend.start());
+
         this.reenumerate();
     }
 
@@ -77,6 +110,8 @@ export default class DeviceLister extends EventEmitter {
     // Needed to let programs exit gracefully
     stop() {
         debug('Removing event listeners for USB attach/detach');
+
+        this._backends.forEach(backend => backend.stop());
 
         Usb.removeListener('attach', this._boundReenumerate);
         Usb.removeListener('detach', this._boundReenumerate);
@@ -92,19 +127,47 @@ export default class DeviceLister extends EventEmitter {
 
         debug('Asking all backends to reenumerate');
 
-        const pendings = this._backends.map(backend => backend());
+        const pendings = this._backends.map(backend => backend.reenumerate());
 
-        Promise.all(pendings).then(backendsResult => {
-            //             debug('TODO: Should conflate: ', stuff);
-
-            this._conflate(backendsResult);
-        }).catch(err => {
+        return Promise.all(pendings).then(backendsResult => this._conflate(backendsResult)).catch(err => {
             debug('Error after reenumerating: ', err);
             this.emit('error', err);
         });
-
-        return pendings;
     }
+
+
+    // Called on the USB attach/detach events, throttles down calls to reenumerate()
+    // Only one reenumeration will be active at any one time - if any reenumerations
+    // are triggered by events when there is one already active, the first one
+    // will be queued and delayed until the active one is finished, the rest
+    // will be silently ignored.
+    _triggerReenumeration(usbDevice) {
+        debug(`Called _triggerReenumeration because of added/removed USB device VID/PID 0x${
+            usbDevice.deviceDescriptor.idVendor.toString(16).padStart(4, '0')}/0x${
+            usbDevice.deviceDescriptor.idProduct.toString(16).padStart(4, '0')}`);
+
+        if (!this._activeReenumeration) {
+            debug('Calling reenumerate().');
+            this._activeReenumeration = this.reenumerate().then(() => {
+                this._activeReenumeration = false;
+            });
+        } else if (!this._queuedReenumeration) {
+            debug('Queuing one reenumeration.');
+            this._queuedReenumeration = true;
+
+            this._activeReenumeration.then(() => {
+                debug('Previous reenumeration done, triggering queued one.');
+
+                this._activeReenumeration = this.reenumerate().then(() => {
+                    this._activeReenumeration = false;
+                });
+                this._queuedReenumeration = false;
+            });
+        } else {
+            debug('Skipping spurious reenumeration request.');
+        }
+    }
+
 
     _conflate(backendsResult) {
         debug('All backends have re-enumerated, conflating...');
@@ -113,23 +176,9 @@ export default class DeviceLister extends EventEmitter {
         const newErrors = new Set();
 
         backendsResult.forEach(results => {
-            results.forEach(trait => {
-                let { serialNumber } = trait;
-                if (trait.error || (!serialNumber)) {
-                    const hash = inspect(trait, { depth: null });
-                    if (!this._currentErrors.has(hash)) {
-                        const capName = Object.keys(trait).filter(key => key !== 'error' && key !== 'serialNumber')[0];
-                        if (trait.error) {
-                            debug(capName, 'error', trait.error.message);
-                            this.emit('error', trait);
-                        } else {
-                            debug(capName, 'no serial number');
-                            this.emit('noserialnumber', trait);
-                        }
-                    }
-
-                    newErrors.add(hash);
-                } else {
+            results.forEach(result => {
+                if (result.serialNumber) {
+                    let { serialNumber } = result;
                     // If the serial number is fully numeric (not a hex string),
                     // cast it into an integer
                     if (typeof serialNumber === 'string' && serialNumber.match(/^\d+$/)) {
@@ -137,8 +186,19 @@ export default class DeviceLister extends EventEmitter {
                     }
 
                     let device = deviceMap.get(serialNumber) || {};
-                    device = Object.assign({}, device, trait);
+                    const { traits } = device;
+                    device = Object.assign({}, device, result);
+                    if (traits) {
+                        device.traits = result.traits.concat(traits);
+                    }
                     deviceMap.set(serialNumber, device);
+                } else if (result.errorSource) {
+                    if (!this._currentErrors.has(result.errorSource)) {
+                        this.emit('error', result.error);
+                    }
+                    newErrors.add(result.errorSource);
+                } else {
+                    throw new Error(`Received neither serial number nor error! ${result}`);
                 }
             });
         });
@@ -148,5 +208,6 @@ export default class DeviceLister extends EventEmitter {
         debug(`Conflated. Now ${Array.from(deviceMap).length} devices with known serial number and ${Array.from(this._currentErrors).length} without.`);
         this._currentDevices = deviceMap;
         this.emit('conflated', deviceMap);
+        return deviceMap;
     }
 }

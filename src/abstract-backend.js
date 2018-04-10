@@ -29,54 +29,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import nrfjprogjs from 'pc-nrfjprog-js';
-import Debug from 'debug';
-import AbstractBackend from './abstract-backend';
+export default class AbstractBackend {
+    constructor() {
+        if (this.constructor === AbstractBackend) {
+            throw new Error('Cannot instantiate AbstractBackend.');
+        }
+    }
 
-const debug = Debug('device-lister:jlink');
-
-export default class JlinkBackend extends AbstractBackend {
-    /* Returns a `Promise` to a list of objects, like:
-     *
-     * [{
-     *   traits: ["jlink"]
-     *   serialNumber: 1234,
-     * }]
-     *
-     * This relies on pc-nrfjprog-js, for more information see
-     * https://nordicsemiconductor.github.io/pc-nrfjprog-js/module-pc-nrfjprog-js.html#.getSerialNumbers
-     *
-     * Please note that the device information does *not* include things such as
-     * device family, or amount or RAM/ROM. This is because jlink/nrfjprog can only
-     * know which probes are there, but cannot know when a probe gets disconnected
-     * from a debug target and connected to another debug target.
-     *
-     * If there were any errors while enumerating segger probes, it will return
-     * an array with just one error item, as per the AbstractBackend format.
+    /*
+     * Implementations can optionally run some code whenever the device lister
+     * starts and stops listening for changes.
      */
     /* eslint-disable-next-line class-methods-use-this */
+    start() {}
+
+    /* eslint-disable-next-line class-methods-use-this */
+    stop() {}
+
+    /* Implementations must returns a `Promise` to an array of objects, like:
+     *
+     * [{
+     *   traits: ['foo', 'bar']
+     *   serialNumber: 1234,
+     *   backendData: {
+     *      serialNumber: 1234,
+     *      manufacturer: 'Arduino LLC (www.arduino.cc)',
+     *      devNode: '/dev/foobar'
+     *   }
+     * },{
+     *   error: new Error(...),
+     *   errorSource: "Unique-ID-for-the-error-source"
+     * }]
+     *
+     * These objects can either be devices with traits known by a specific
+     * backend, or errors that the backend wants to raise up.
+     *
+     * Devices with traits *must* have the `traits` and `serialNumber` properties,
+     * plus an optional property containing backend-specific data.
+     *
+     * Errors are synchronously raised upwards to the conflater, and must include
+     * a unique identifier for the source/reason of the error.
+     */
     reenumerate() {
-        debug('Reenumerating...');
-        return new Promise((res, rej) => {
-            nrfjprogjs.getSerialNumbers((err, serialnumbers) => {
-                if (err) {
-                    rej(err);
-                } else {
-                    res(serialnumbers);
-                }
-            });
-        }).then(serialnumbers => serialnumbers.map(serialnumber => {
-            debug('Enumerated:', serialnumber);
-            return {
-                serialNumber: serialnumber,
-                traits: ['jlink'],
-            };
-        })).catch(err => {
-            debug('Error:', err.errmsg);
-            return [{
-                error: err,
-                errorSource: 'jlink',
-            }];
-        });
+        throw new Error(`Reenumerate must be implemented in ${this.constructor.name}`);
     }
 }
