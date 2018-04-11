@@ -77,26 +77,28 @@ export function getStringDescriptors(device, indexes) {
  * @param {Object} device The usb device to open.
  * @returns {Promise} Promise that resolves if successful, rejects if failed.
  */
-export function openDevice(device, retries = 0) {
+export function openDevice(device) {
     return new Promise((res, rej) => {
-        try {
-            device.open();
-        } catch (error) {
-            if (process.platform === 'win32' &&
-                retries < 5 &&
-                error.message === 'LIBUSB_ERROR_ACCESS') {
-                // In win platforms, the winUSB driver might allow only one
-                // process to access the USB device, potentially creating
-                // race conditions. Mitigate this with an auto-retry mechanism.
-                debug(`Got LIBUSB_ERROR_ACCESS on win32, retrying (attempt ${retries})...`);
-                setTimeout(() => {
-                    res(openDevice(device, retries + 1));
-                }, (50 * retries * retries) + (100 * Math.random()));
-            } else {
-                return rej(error);
+        const tryOpen = (retries = 0) => {
+            try {
+                device.open();
+                res();
+            } catch (error) {
+                if (process.platform === 'win32' &&
+                    retries < 5 &&
+                    error.message === 'LIBUSB_ERROR_ACCESS') {
+                    // In win platforms, the winUSB driver might allow only one
+                    // process to access the USB device, potentially creating
+                    // race conditions. Mitigate this with an auto-retry mechanism.
+                    debug(`Got LIBUSB_ERROR_ACCESS on win32, retrying (attempt ${retries})...`);
+                    const delay = (50 * retries * retries) + (100 * Math.random());
+                    setTimeout(() => tryOpen(retries + 1), delay);
+                } else {
+                    rej(error);
+                }
             }
-        }
-        return res();
+        };
+        tryOpen();
     });
 }
 
