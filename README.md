@@ -10,14 +10,6 @@ interface with nRF SoCs and development kits.
 
 Node.js 8 or newer
 
-## Known issues
-
-On Windows, the serial number of CDC ACM composite devices is incorrect. This is due to a
-bug in the node-serialport library. The issue has been fixed on the node-serialport master
-branch ref. https://github.com/node-serialport/node-serialport/issues/1459, but it has not
-been released yet. We will create a new release of nrf-device-lister shortly after the next
-node-serialport release to fix this issue.
-
 ## Usage as a command
 
 Do a `npm install nrf-device-lister` or `yarn add nrf-device-lister`, then run in a console:
