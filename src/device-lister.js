@@ -180,12 +180,7 @@ export default class DeviceLister extends EventEmitter {
         backendsResult.forEach(results => {
             results.forEach(result => {
                 if (result.serialNumber) {
-                    let { serialNumber } = result;
-                    // If the serial number is fully numeric (not a hex string),
-                    // cast it into an integer
-                    if (typeof serialNumber === 'string' && serialNumber.match(/^\d+$/)) {
-                        serialNumber = Number(serialNumber);
-                    }
+                    const { serialNumber } = result;
 
                     let device = deviceMap.get(serialNumber) || {};
                     const { traits } = device;
