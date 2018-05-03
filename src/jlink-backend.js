@@ -68,7 +68,12 @@ export default class JlinkBackend extends AbstractBackend {
         }).then(serialnumbers => serialnumbers.map(serialnumber => {
             debug('Enumerated:', serialnumber);
             return {
-                serialNumber: serialnumber,
+                // The nrfjprogjs provides the serial numbers as integers, what we want
+                // is the serial number as described in the USB descriptor (iSerialNumber).
+                // The USB descriptor iSerialNumber attribute is of type string.
+                //
+                // Pad the serial number with '0' with the assumed serial number length of 12
+                serialNumber: serialnumber.toString().padStart(12, '0'),
                 traits: ['jlink'],
             };
         })).catch(err => {
