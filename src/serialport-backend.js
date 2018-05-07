@@ -53,7 +53,7 @@ export default class SerialPortBackend extends AbstractBackend {
      *
      * [{
      *   traits: 'serialport'
-     *   serialNumber: 1234,
+     *   serialNumber: '1234',
      *   serialport: {
      *      comName: 'COM3',
      *      manufacturer: 'Arduino LLC (www.arduino.cc)',

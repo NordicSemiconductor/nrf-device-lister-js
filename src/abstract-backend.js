@@ -50,9 +50,9 @@ export default class AbstractBackend {
      *
      * [{
      *   traits: ['foo', 'bar']
-     *   serialNumber: 1234,
+     *   serialNumber: '1234',
      *   backendData: {
-     *      serialNumber: 1234,
+     *      serialNumber: '1234',
      *      manufacturer: 'Arduino LLC (www.arduino.cc)',
      *      devNode: '/dev/foobar'
      *   }

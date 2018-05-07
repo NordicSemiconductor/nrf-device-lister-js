@@ -90,9 +90,9 @@ export default class UsbBackend extends AbstractBackend {
      *
      * {
      *   traits: ['usb']
-     *   serialNumber: 1234,
+     *   serialNumber: '1234',
      *   usb: {
-     *      serialNumber: 1234,
+     *      serialNumber: '1234',
      *      manufacturer: 'Arduino LLC (www.arduino.cc)',
      *      product: 'Development board model something'
      *      device: (instance of usb's Device)
@@ -184,9 +184,9 @@ export default class UsbBackend extends AbstractBackend {
      *
      * [{
      *   traits: ['usb', 'nordicUsb']
-     *   serialNumber: 1234,
+     *   serialNumber: '1234',
      *   usb: {
-     *      serialNumber: 1234,
+     *      serialNumber: '1234',
      *      manufacturer: 'Arduino LLC (www.arduino.cc)',
      *      product: 'Development board model something'
      *      device: (instance of usb's Device)
