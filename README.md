@@ -53,7 +53,7 @@ lister.on('conflated', function(deviceMap){
     // Each item in the Map will look like this:
     /*
        { traits: [ 'jlink', 'serialport', 'usb', 'seggerUsb' ],
-         serialNumber: 12345678,
+         serialNumber: '00012345678',
          usb: {
             serialNumber: '00012345678',
             manufacturer: 'SEGGER',

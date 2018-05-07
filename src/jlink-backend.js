@@ -40,7 +40,7 @@ export default class JlinkBackend extends AbstractBackend {
      *
      * [{
      *   traits: ["jlink"]
-     *   serialNumber: 1234,
+     *   serialNumber: '1234',
      * }]
      *
      * This relies on pc-nrfjprog-js, for more information see
