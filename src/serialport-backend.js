@@ -90,6 +90,7 @@ export default class SerialPortBackend extends AbstractBackend {
                     }
                     const err = new Error(`Could not fetch serial number for serial port at ${port.comName}`);
                     err.serialport = port;
+                    err.errorCode = 3;
                     return {
                         error: err,
                         errorSource: `serialport-${port.comName}`,

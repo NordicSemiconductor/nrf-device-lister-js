@@ -60,7 +60,9 @@ export default class JlinkBackend extends AbstractBackend {
         return new Promise((res, rej) => {
             nrfjprogjs.getSerialNumbers((err, serialnumbers) => {
                 if (err) {
-                    rej(err);
+                    const error = err;
+                    error.errorCode = 10;
+                    rej(error);
                 } else {
                     res(serialnumbers);
                 }

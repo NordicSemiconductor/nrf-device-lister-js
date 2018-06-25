@@ -195,7 +195,9 @@ export default class DeviceLister extends EventEmitter {
                     }
                     newErrors.add(result.errorSource);
                 } else {
-                    throw new Error(`Received neither serial number nor error! ${result}`);
+                    const err = new Error(`Received neither serial number nor error! ${result}`);
+                    err.errorCode = 2;
+                    throw err;
                 }
             });
         });

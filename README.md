@@ -123,5 +123,26 @@ setTimeout(function(){ lister.stop(); }, 5000);
 
 ```
 
+## Error Codes
 
-
+Error message                                                   | Error code
+----------------------------------------------------------------| -------------
+Cannot instantiate AbstractBackend.                             | 0
+Reenumerate must be implemented in _constructorName_            | 1
+Received neither serial number nor error!                       | 2
+Could not fetch serial number for serial port at _comName_      | 3
+Could not get serial numbers from pc-nrfjprog-js                | 10
+LIBUSB_SUCCESS                                                  | 100
+LIBUSB_ERROR_IO                                                 | 101
+LIBUSB_ERROR_INVALID_PARAM                                      | 102
+LIBUSB_ERROR_ACCESS                                             | 103
+LIBUSB_ERROR_NO_DEVICE                                          | 104
+LIBUSB_ERROR_NOT_FOUND                                          | 105
+LIBUSB_ERROR_BUSY                                               | 106
+LIBUSB_ERROR_TIMEOUT                                            | 107
+LIBUSB_ERROR_OVERFLOW                                           | 108
+LIBUSB_ERROR_PIPE                                               | 109
+LIBUSB_ERROR_INTERRUPTED                                        | 110
+LIBUSB_ERROR_NO_MEM                                             | 111
+LIBUSB_ERROR_NOT_SUPPORTED                                      | 112
+LIBUSB_ERROR_OTHER                                              | 113
