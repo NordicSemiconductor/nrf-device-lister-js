@@ -94,67 +94,6 @@ export function openDevice(device) {
                     const delay = (50 * retries * retries) + (100 * Math.random());
                     setTimeout(() => tryOpen(retries + 1), delay);
                 } else {
-                    switch (error.message) {
-                        case 'LIBUSB_SUCCESS': {
-                            error.errorCode = 100;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_IO': {
-                            error.errorCode = 101;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_INVALID_PARAM': {
-                            error.errorCode = 102;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_ACCESS': {
-                            error.errorCode = 103;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_NO_DEVICE': {
-                            error.errorCode = 104;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_NOT_FOUND': {
-                            error.errorCode = 105;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_BUSY': {
-                            error.errorCode = 106;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_TIMEOUT': {
-                            error.errorCode = 107;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_OVERFLOW': {
-                            error.errorCode = 108;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_PIPE': {
-                            error.errorCode = 109;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_INTERRUPTED': {
-                            error.errorCode = 110;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_NO_MEM': {
-                            error.errorCode = 111;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_NOT_SUPPORTED': {
-                            error.errorCode = 112;
-                            break;
-                        }
-                        case 'LIBUSB_ERROR_OTHER': {
-                            error.errorCode = 113;
-                            break;
-                        }
-                        default: {
-                            error.errorCode = 113;
-                        }
-                    }
                     rej(error);
                 }
             }

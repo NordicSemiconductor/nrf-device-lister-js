@@ -60,6 +60,80 @@ function getMatchingDeviceFilters(device, filters) {
     }).filter(filterName => filterName);
 }
 
+
+/**
+ * Given a libusb error, this function assigns the error argument an error code
+ * representing the error type.
+ *
+ * @param {Object} err The error to assign an error code to.
+ * @returns {Object} The error with a code assigned, given it is a libusb error.
+*/
+function decorateError(err) {
+    const error = err;
+    switch (error.message) {
+        case 'LIBUSB_SUCCESS': {
+            error.errorCode = 100;
+            break;
+        }
+        case 'LIBUSB_ERROR_IO': {
+            error.errorCode = 101;
+            break;
+        }
+        case 'LIBUSB_ERROR_INVALID_PARAM': {
+            error.errorCode = 102;
+            break;
+        }
+        case 'LIBUSB_ERROR_ACCESS': {
+            error.errorCode = 103;
+            break;
+        }
+        case 'LIBUSB_ERROR_NO_DEVICE': {
+            error.errorCode = 104;
+            break;
+        }
+        case 'LIBUSB_ERROR_NOT_FOUND': {
+            error.errorCode = 105;
+            break;
+        }
+        case 'LIBUSB_ERROR_BUSY': {
+            error.errorCode = 106;
+            break;
+        }
+        case 'LIBUSB_ERROR_TIMEOUT': {
+            error.errorCode = 107;
+            break;
+        }
+        case 'LIBUSB_ERROR_OVERFLOW': {
+            error.errorCode = 108;
+            break;
+        }
+        case 'LIBUSB_ERROR_PIPE': {
+            error.errorCode = 109;
+            break;
+        }
+        case 'LIBUSB_ERROR_INTERRUPTED': {
+            error.errorCode = 110;
+            break;
+        }
+        case 'LIBUSB_ERROR_NO_MEM': {
+            error.errorCode = 111;
+            break;
+        }
+        case 'LIBUSB_ERROR_NOT_SUPPORTED': {
+            error.errorCode = 112;
+            break;
+        }
+        case 'LIBUSB_ERROR_OTHER': {
+            error.errorCode = 113;
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    return error;
+}
+
 /**
  * Backend that enumerates usb devices.
  */
@@ -147,7 +221,7 @@ export default class UsbBackend extends AbstractBackend {
                     });
                 }).catch(error => {
                     debug('Error when reading device:', deviceId, error.message);
-                    const err = error;
+                    const err = decorateError(error);
                     err.usb = device;
                     result = {
                         error: err,
@@ -160,7 +234,7 @@ export default class UsbBackend extends AbstractBackend {
                     } catch (error) {
                         debug('Error when closing device:', deviceId, error.message);
                         if (!result.error) {
-                            const err = error;
+                            const err = decorateError(error);
                             err.usb = device;
                             result = {
                                 error: err,
