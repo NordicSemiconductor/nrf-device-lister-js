@@ -24,7 +24,7 @@ All options are displayed there.
 
 ```js
 // Import / require
-var DeviceLister = require('nrf-device-lister');
+var { DeviceLister, ErrorCodes } = require('nrf-device-lister');
 
 // Create an instance, specifying which kind of traits to look for,
 // as booleans.
@@ -84,7 +84,7 @@ lister.on('conflated', function(deviceMap){
 // the first one is emitted.
 lister.on('error', function(err){
     // `err` is an instance of Error
-    console.error(err.message);
+    console.error(err.message+ ' (error code: '+err.errorCode+')');
 
     // Optionally, if the error originated from a USB device, there will
     // be an `usb` property with an instance of `usb`'s `Device`:
