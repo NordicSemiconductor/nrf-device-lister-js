@@ -32,6 +32,7 @@
 import nrfjprogjs from 'pc-nrfjprog-js';
 import Debug from 'debug';
 import AbstractBackend from './abstract-backend';
+import ErrorCodes from './util/errors';
 
 const debug = Debug('device-lister:jlink');
 
@@ -61,7 +62,7 @@ export default class JlinkBackend extends AbstractBackend {
             nrfjprogjs.getSerialNumbers((err, serialnumbers) => {
                 if (err) {
                     const error = err;
-                    error.errorCode = 10;
+                    error.errorCode = ErrorCodes.NO_SERIAL_FROM_PC_NRFJPROGJS;
                     rej(error);
                 } else {
                     res(serialnumbers);

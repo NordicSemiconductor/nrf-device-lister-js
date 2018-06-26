@@ -34,6 +34,7 @@ import Debug from 'debug';
 import { Mutex } from 'await-semaphore';
 import AbstractBackend from './abstract-backend';
 import { getStringDescriptors, openDevice, getDeviceId } from './util/usb';
+import ErrorCodes from './util/errors';
 
 const debug = Debug('device-lister:usb');
 
@@ -72,59 +73,59 @@ function decorateError(err) {
     const error = err;
     switch (error.message) {
         case 'LIBUSB_SUCCESS': {
-            error.errorCode = 100;
+            error.errorCode = ErrorCodes.LIBUSB_SUCCESS;
             break;
         }
         case 'LIBUSB_ERROR_IO': {
-            error.errorCode = 101;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_IO;
             break;
         }
         case 'LIBUSB_ERROR_INVALID_PARAM': {
-            error.errorCode = 102;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_INVALID_PARAM;
             break;
         }
         case 'LIBUSB_ERROR_ACCESS': {
-            error.errorCode = 103;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_ACCESS;
             break;
         }
         case 'LIBUSB_ERROR_NO_DEVICE': {
-            error.errorCode = 104;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_NO_DEVICE;
             break;
         }
         case 'LIBUSB_ERROR_NOT_FOUND': {
-            error.errorCode = 105;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_NOT_FOUND;
             break;
         }
         case 'LIBUSB_ERROR_BUSY': {
-            error.errorCode = 106;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_BUSY;
             break;
         }
         case 'LIBUSB_ERROR_TIMEOUT': {
-            error.errorCode = 107;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_TIMEOUT;
             break;
         }
         case 'LIBUSB_ERROR_OVERFLOW': {
-            error.errorCode = 108;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_OVERFLOW;
             break;
         }
         case 'LIBUSB_ERROR_PIPE': {
-            error.errorCode = 109;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_PIPE;
             break;
         }
         case 'LIBUSB_ERROR_INTERRUPTED': {
-            error.errorCode = 110;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_INTERRUPTED;
             break;
         }
         case 'LIBUSB_ERROR_NO_MEM': {
-            error.errorCode = 111;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_NO_MEM;
             break;
         }
         case 'LIBUSB_ERROR_NOT_SUPPORTED': {
-            error.errorCode = 112;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_NOT_SUPPORTED;
             break;
         }
         case 'LIBUSB_ERROR_OTHER': {
-            error.errorCode = 113;
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_OTHER;
             break;
         }
         default: {
