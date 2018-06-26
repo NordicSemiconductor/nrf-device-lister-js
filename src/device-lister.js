@@ -42,7 +42,7 @@ const debug = Debug('device-lister:conflater');
 const SEGGER_VENDOR_ID = 0x1366;
 const NORDIC_VENDOR_ID = 0x1915;
 
-class DeviceLister extends EventEmitter {
+export default class DeviceLister extends EventEmitter {
     constructor(traits = {}) {
         super();
 
@@ -211,8 +211,4 @@ class DeviceLister extends EventEmitter {
         return deviceMap;
     }
 }
-
-module.exports = {
-    DeviceLister,
-    ErrorCodes,
-};
+DeviceLister.ErrorCodes = ErrorCodes;

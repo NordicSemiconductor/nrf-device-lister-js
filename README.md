@@ -24,7 +24,7 @@ All options are displayed there.
 
 ```js
 // Import / require
-var { DeviceLister, ErrorCodes } = require('nrf-device-lister');
+var DeviceLister = require('nrf-device-lister');
 
 // Create an instance, specifying which kind of traits to look for,
 // as booleans.
