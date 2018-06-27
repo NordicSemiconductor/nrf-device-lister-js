@@ -29,10 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+import ErrorCodes from './util/errors';
+
 export default class AbstractBackend {
     constructor() {
         if (this.constructor === AbstractBackend) {
-            throw new Error('Cannot instantiate AbstractBackend.');
+            const err = new Error('Cannot instantiate AbstractBackend.');
+            err.errorCode = ErrorCodes.CANNOT_INSTANTIATE_ABSTRACTBACKEND;
+            throw err;
         }
     }
 
@@ -71,6 +75,8 @@ export default class AbstractBackend {
      * a unique identifier for the source/reason of the error.
      */
     reenumerate() {
-        throw new Error(`Reenumerate must be implemented in ${this.constructor.name}`);
+        const err = new Error(`Reenumerate must be implemented in ${this.constructor.name}`);
+        err.errorCode = ErrorCodes.REENUMERATE_NOT_IMPLEMENTED;
+        throw err;
     }
 }

@@ -34,6 +34,7 @@ import Debug from 'debug';
 import { Mutex } from 'await-semaphore';
 import AbstractBackend from './abstract-backend';
 import { getStringDescriptors, openDevice, getDeviceId } from './util/usb';
+import ErrorCodes from './util/errors';
 
 const debug = Debug('device-lister:usb');
 
@@ -58,6 +59,80 @@ function getMatchingDeviceFilters(device, filters) {
         }
         return undefined;
     }).filter(filterName => filterName);
+}
+
+
+/**
+ * Given a libusb error, this function assigns the error argument an error code
+ * representing the error type.
+ *
+ * @param {Object} err The error to assign an error code to.
+ * @returns {Object} The error with a code assigned, given it is a libusb error.
+*/
+function decorateError(err) {
+    const error = err;
+    switch (error.message) {
+        case 'LIBUSB_SUCCESS': {
+            error.errorCode = ErrorCodes.LIBUSB_SUCCESS;
+            break;
+        }
+        case 'LIBUSB_ERROR_IO': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_IO;
+            break;
+        }
+        case 'LIBUSB_ERROR_INVALID_PARAM': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_INVALID_PARAM;
+            break;
+        }
+        case 'LIBUSB_ERROR_ACCESS': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_ACCESS;
+            break;
+        }
+        case 'LIBUSB_ERROR_NO_DEVICE': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_NO_DEVICE;
+            break;
+        }
+        case 'LIBUSB_ERROR_NOT_FOUND': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_NOT_FOUND;
+            break;
+        }
+        case 'LIBUSB_ERROR_BUSY': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_BUSY;
+            break;
+        }
+        case 'LIBUSB_ERROR_TIMEOUT': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_TIMEOUT;
+            break;
+        }
+        case 'LIBUSB_ERROR_OVERFLOW': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_OVERFLOW;
+            break;
+        }
+        case 'LIBUSB_ERROR_PIPE': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_PIPE;
+            break;
+        }
+        case 'LIBUSB_ERROR_INTERRUPTED': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_INTERRUPTED;
+            break;
+        }
+        case 'LIBUSB_ERROR_NO_MEM': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_NO_MEM;
+            break;
+        }
+        case 'LIBUSB_ERROR_NOT_SUPPORTED': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_NOT_SUPPORTED;
+            break;
+        }
+        case 'LIBUSB_ERROR_OTHER': {
+            error.errorCode = ErrorCodes.LIBUSB_ERROR_OTHER;
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    return error;
 }
 
 /**
@@ -147,7 +222,7 @@ export default class UsbBackend extends AbstractBackend {
                     });
                 }).catch(error => {
                     debug('Error when reading device:', deviceId, error.message);
-                    const err = error;
+                    const err = decorateError(error);
                     err.usb = device;
                     result = {
                         error: err,
@@ -160,7 +235,7 @@ export default class UsbBackend extends AbstractBackend {
                     } catch (error) {
                         debug('Error when closing device:', deviceId, error.message);
                         if (!result.error) {
-                            const err = error;
+                            const err = decorateError(error);
                             err.usb = device;
                             result = {
                                 error: err,

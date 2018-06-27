@@ -32,6 +32,7 @@
 import SerialPort from 'serialport';
 import Debug from 'debug';
 import AbstractBackend from './abstract-backend';
+import ErrorCodes from './util/errors';
 
 const debug = Debug('device-lister:serialport');
 
@@ -90,6 +91,7 @@ export default class SerialPortBackend extends AbstractBackend {
                     }
                     const err = new Error(`Could not fetch serial number for serial port at ${port.comName}`);
                     err.serialport = port;
+                    err.errorCode = ErrorCodes.COULD_NOT_FETCH_SNO_FOR_PORT;
                     return {
                         error: err,
                         errorSource: `serialport-${port.comName}`,

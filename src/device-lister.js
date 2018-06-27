@@ -35,6 +35,7 @@ import Debug from 'debug';
 import UsbBackend from './usb-backend';
 import SerialPortBackend from './serialport-backend';
 import JlinkBackend from './jlink-backend';
+import ErrorCodes from './util/errors';
 
 const debug = Debug('device-lister:conflater');
 
@@ -195,7 +196,9 @@ export default class DeviceLister extends EventEmitter {
                     }
                     newErrors.add(result.errorSource);
                 } else {
-                    throw new Error(`Received neither serial number nor error! ${result}`);
+                    const err = new Error(`Received neither serial number nor error! ${result}`);
+                    err.errorCode = ErrorCodes.RECEIVED_NEITHER_SNO_NOR_ERROR;
+                    throw err;
                 }
             });
         });
@@ -208,3 +211,4 @@ export default class DeviceLister extends EventEmitter {
         return deviceMap;
     }
 }
+DeviceLister.ErrorCodes = ErrorCodes;

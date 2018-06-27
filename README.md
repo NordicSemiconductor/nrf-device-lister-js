@@ -84,7 +84,7 @@ lister.on('conflated', function(deviceMap){
 // the first one is emitted.
 lister.on('error', function(err){
     // `err` is an instance of Error
-    console.error(err.message);
+    console.error(err.message+ ' (error code: '+err.errorCode+')');
 
     // Optionally, if the error originated from a USB device, there will
     // be an `usb` property with an instance of `usb`'s `Device`:
@@ -123,5 +123,28 @@ setTimeout(function(){ lister.stop(); }, 5000);
 
 ```
 
+## Error Codes
 
+Error codes are accessed from `DeviceLister.ErrorCodes`.
 
+Error message                                                   |Constant                          | Error code
+----------------------------------------------------------------|----------------------------------|-------------
+Cannot instantiate AbstractBackend.                             |CANNOT_INSTANTIATE_ABSTRACTBACKEND| 0
+Reenumerate must be implemented in _constructorName_            |REENUMERATE_NOT_IMPLEMENTED       | 1
+Received neither serial number nor error!                       |RECEIVED_NEITHER_SNO_NOR_ERROR    | 2
+Could not fetch serial number for serial port at _comName_      |COULD_NOT_FETCH_SNO_FOR_PORT      | 3
+Could not get serial numbers from pc-nrfjprog-js                |NO_SERIAL_FROM_PC_NRFJPROGJS      | 10
+LIBUSB_SUCCESS                                                  |LIBUSB_SUCCESS                    | 100
+LIBUSB_ERROR_IO                                                 |LIBUSB_ERROR_IO                   | 101
+LIBUSB_ERROR_INVALID_PARAM                                      |LIBUSB_ERROR_INVALID_PARAM        | 102
+LIBUSB_ERROR_ACCESS                                             |LIBUSB_ERROR_ACCESS               | 103
+LIBUSB_ERROR_NO_DEVICE                                          |LIBUSB_ERROR_NO_DEVICE            | 104
+LIBUSB_ERROR_NOT_FOUND                                          |LIBUSB_ERROR_NOT_FOUND            | 105
+LIBUSB_ERROR_BUSY                                               |LIBUSB_ERROR_BUSY                 | 106
+LIBUSB_ERROR_TIMEOUT                                            |LIBUSB_ERROR_TIMEOUT              | 107
+LIBUSB_ERROR_OVERFLOW                                           |LIBUSB_ERROR_OVERFLOW             | 108
+LIBUSB_ERROR_PIPE                                               |LIBUSB_ERROR_PIPE                 | 109
+LIBUSB_ERROR_INTERRUPTED                                        |LIBUSB_ERROR_INTERRUPTED          | 110
+LIBUSB_ERROR_NO_MEM                                             |LIBUSB_ERROR_NO_MEM               | 111
+LIBUSB_ERROR_NOT_SUPPORTED                                      |LIBUSB_ERROR_NOT_SUPPORTED        | 112
+LIBUSB_ERROR_OTHER                                              |LIBUSB_ERROR_OTHER                | 113
