@@ -123,6 +123,36 @@ setTimeout(function(){ lister.stop(); }, 5000);
 
 ```
 
+## Development
+
+### Build
+
+The project is using `rollup.js`, so the following command is needed to run the build:
+    npm run rollup
+
+
+### Test
+
+#### Equipments
+
+The project comes with automated integration tests in the `test` directory.
+In order to run the test, the following devices must be connected to the PC:
+* a nRF52840 development kit must be attached to the PC on CDC ACM port and
+* a nRF52840 dongle which is preprogrammed must be attached to the PC.
+
+#### Environment Variables
+
+The following environment variables need to be set to specify certain devices for the tests.
+* LISTER_NRF52840_DK_JLINK_SERIAL_NUMBER
+* LISTER_NRF52840_DK_USB_SERIAL_NUMBER
+* LISTER_NRF52840_DONGLE_USB_SERIAL_NUMBER
+
+Otherwise, the test will fail.
+
+To run the tests:
+
+    npm test
+
 ## Error Codes
 
 Error codes are accessed from `DeviceLister.ErrorCodes`.

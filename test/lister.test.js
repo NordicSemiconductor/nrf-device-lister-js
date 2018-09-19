@@ -40,48 +40,49 @@ const path = require('path');
 const DeviceLister = require('../dist/device-lister');
 const nrfjprog = require('pc-nrfjprog-js');
 
-const debug = require('debug')('device-lister:test');
+const testJlinkSerialNumber = process.env.NRF52840_DK_JLINK_SERIAL_NUMBER;
+const testUsbSerialNumber = process.env.NRF52840_DK_USB_SERIAL_NUMBER;
+const testFirmwarePath = path.join(__dirname, 'data', 'mbr_bootloader_pca10056.hex');
 
 let lister;
-const testJlinkSerialNumber = process.env.LISTER_JLINK_SERIAL_NUMBER;
-const testUsbDkSerialNumber = process.env.LISTER_USB_DK_SERIAL_NUMBER;
-const testUsbDongleSerialNumber = process.env.LISTER_USB_DONGLE_SERIAL_NUMBER;
-const testFirmware = path.join(__dirname, 'data', 'mbr_bootloader_pca10056.hex');
 
-describe('The Device Lister', () => {
+const waitForDevices = () => new Promise(resolve => {
+    lister.on('conflated', deviceMap => {
+        lister.stop();
+        resolve(deviceMap);
+    });
+    lister.start();
+});
+
+describe('The Device Lister Traits', () => {
     it('shall list jlink devices', async () => {
         lister = new DeviceLister({
             jlink: true,
         });
-        const devices = await new Promise(resolve => {
-            lister.on('conflated', deviceMap => {
-                lister.stop();
-                resolve(deviceMap);
-            });
-            lister.start();
-        });
-        expect(devices.has(testJlinkSerialNumber)).toBeTruthy();
+        const devices = await waitForDevices();
+        expect(Array.from(devices.values()).find(d => d.traits.includes('jlink'))).not.toBeUndefined();
     });
 
     it('shall list nordic usb devices', async () => {
         lister = new DeviceLister({
             nordicUsb: true,
         });
-        const devices = await new Promise(resolve => {
-            lister.on('conflated', deviceMap => {
-                lister.stop();
-                resolve(deviceMap);
-            });
-            lister.start();
-        });
-        expect(devices.has(testUsbDongleSerialNumber)).toBeTruthy();
+        const devices = await waitForDevices();
+        expect(Array.from(devices.values()).find(d => d.traits.includes('nordicUsb'))).not.toBeUndefined();
     });
+});
 
+describe('The Device Lister Dynamic', () => {
     it('shall list when new nordic usb device is detected', async () => {
+        if (!testJlinkSerialNumber || !testUsbSerialNumber) {
+            return;
+        }
+
         lister = new DeviceLister({
             nordicUsb: true,
         });
 
+        // Erase the flash and shall not see Nordic USB CDC ACM interface.
         await new Promise(resolve => {
             nrfjprog.recover(
                 parseInt(testJlinkSerialNumber, 10),
@@ -96,9 +97,11 @@ describe('The Device Lister', () => {
             });
             lister.start();
         });
-        expect(devices.has(testUsbDkSerialNumber)).toBeFalsy();
+        expect(devices.has(testUsbSerialNumber)).toBeFalsy();
+
+        // Program MBR and Bootloader to the device and shall see Nordic USB CDC ACM interface now.
         await new Promise(resolve => {
-            nrfjprog.program(parseInt(testJlinkSerialNumber, 10), testFirmware, {}, () => {
+            nrfjprog.program(parseInt(testJlinkSerialNumber, 10), testFirmwarePath, {}, () => {
                 resolve();
             });
         });
@@ -108,6 +111,6 @@ describe('The Device Lister', () => {
                 resolve(deviceMap);
             });
         });
-        expect(devices.has(testUsbDkSerialNumber)).toBeTruthy();
+        expect(devices.has(testUsbSerialNumber)).toBeTruthy();
     }, 20000);
 });
