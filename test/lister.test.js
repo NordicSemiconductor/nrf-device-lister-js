@@ -46,28 +46,18 @@ const testFirmwarePath = path.join(__dirname, 'data', 'mbr_bootloader_pca10056.h
 
 let lister;
 
-const waitForDevices = () => new Promise(resolve => {
-    lister.on('conflated', deviceMap => {
-        lister.stop();
-        resolve(deviceMap);
-    });
-    lister.start();
-});
-
 describe('The Device Lister Traits', () => {
     it('shall list jlink devices', async () => {
-        lister = new DeviceLister({
+        const devices = await new DeviceLister({
             jlink: true,
-        });
-        const devices = await waitForDevices();
+        }).reenumerate();
         expect(Array.from(devices.values()).find(d => d.traits.includes('jlink'))).not.toBeUndefined();
     });
 
     it('shall list nordic usb devices', async () => {
-        lister = new DeviceLister({
+        const devices = await new DeviceLister({
             nordicUsb: true,
-        });
-        const devices = await waitForDevices();
+        }).reenumerate();
         expect(Array.from(devices.values()).find(d => d.traits.includes('nordicUsb'))).not.toBeUndefined();
     });
 });
