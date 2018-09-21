@@ -47,6 +47,7 @@ args
     .option('-g, --segger-usb', 'Include Segger USB devices (with VendorID 0x1366, if available through libusb)')
     .option('-s, --serialport', 'Include serial ports (including USB CDC ACMs)')
     .option('-j, --jlink', 'Include J-link probes (those available through pc-nrfjprog-js)')
+    .option('-b, --find-by-sn', 'Find device by serial number')
     .option('-w, --watch', 'Keep outputting a list of devices on any changes')
     .option('-d, --debug', 'Enable debug messages')
     .parse(process.argv);
@@ -56,7 +57,7 @@ if (args.debug) {
 }
 
 if (!args.usb && !args.nordicUsb && !args.nordicDfu && !args.seggerUsb &&
-    !args.serialport && !args.jlink) {
+    !args.serialport && !args.jlink && !args.findBySn) {
     console.error('No device traits specified, no devices will be listed!');
     console.error('Run with the --help option to see types of devices to watch for.');
 }
@@ -71,6 +72,9 @@ const lister = new DeviceLister({
 });
 
 lister.on('error', error => {
+    if (args.findBySn) {
+        return;
+    }
     if (error.usb) {
         console.error(`Error from USB device VID/PID 0x${
             error.usb.deviceDescriptor.idVendor.toString(16).padStart(4, '0')}/0x${
@@ -84,6 +88,9 @@ lister.on('error', error => {
 });
 
 lister.on('conflated', deviceMap => {
+    if (args.findBySn) {
+        return;
+    }
     // Pretty-print some info
     console.log('Received update:');
     deviceMap.forEach((device, serialNumber) => {
@@ -99,3 +106,8 @@ if (args.watch) {
     lister.reenumerate();
 }
 
+if (args.findBySn) {
+    lister.reenumerate().then(devices => {
+        console.log(devices.get(args.args[0]));
+    });
+}

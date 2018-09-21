@@ -101,6 +101,7 @@ describe('The Device Lister Dynamic', () => {
                 resolve(deviceMap);
             });
         });
-        expect(devices.has(testUsbSerialNumber)).toBeTruthy();
+        console.log(Array.from(devices.values())[0].usb.device);
+        expect(devices.has(testUsbSerialNumber)).not.toBeTruthy();
     }, 20000);
 });
