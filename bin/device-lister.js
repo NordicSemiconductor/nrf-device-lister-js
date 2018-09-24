@@ -47,7 +47,7 @@ args
     .option('-g, --segger-usb', 'Include Segger USB devices (with VendorID 0x1366, if available through libusb)')
     .option('-s, --serialport', 'Include serial ports (including USB CDC ACMs)')
     .option('-j, --jlink', 'Include J-link probes (those available through pc-nrfjprog-js)')
-    .option('-b, --find-by-sn', 'Find device by serial number')
+    .option('-b, --find-by-sn [serialNumber]', 'Find device by serial number')
     .option('-w, --watch', 'Keep outputting a list of devices on any changes')
     .option('-d, --debug', 'Enable debug messages')
     .parse(process.argv);
@@ -108,6 +108,6 @@ if (args.watch) {
 
 if (args.findBySn) {
     lister.reenumerate().then(devices => {
-        console.log(devices.get(args.args[0]));
+        console.log(devices.get(args.findBySn));
     });
 }
