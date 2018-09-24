@@ -33,6 +33,7 @@ import SerialPort from 'serialport';
 import Debug from 'debug';
 import AbstractBackend from './abstract-backend';
 import ErrorCodes from './util/errors';
+import { getBoardVersion } from './util/board-versions';
 
 const debug = Debug('device-lister:serialport');
 
@@ -86,6 +87,7 @@ export default class SerialPortBackend extends AbstractBackend {
                         return {
                             serialNumber: port.serialNumber,
                             serialport: port,
+                            boardVersion: getBoardVersion(port.serialNumber),
                             traits: ['serialport'],
                         };
                     }
