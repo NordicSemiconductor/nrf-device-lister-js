@@ -40,6 +40,8 @@ const path = require('path');
 const DeviceLister = require('../dist/device-lister');
 const nrfjprog = require('pc-nrfjprog-js');
 
+const { getBoardVersion } = DeviceLister;
+
 const testJlinkSerialNumber = process.env.NRF52840_DK_JLINK_SERIAL_NUMBER;
 const testUsbSerialNumber = process.env.NRF52840_DK_USB_SERIAL_NUMBER;
 const testFirmwarePath = path.join(__dirname, 'data', 'mbr_bootloader_pca10056.hex');
@@ -104,4 +106,16 @@ describe('The Device Lister Dynamic', () => {
         console.log(Array.from(devices.values())[0].usb.device);
         expect(devices.has(testUsbSerialNumber)).not.toBeTruthy();
     }, 20000);
+});
+
+describe('The Device Versions', () => {
+    it('shall get corerct device board versions', async () => {
+        expect(getBoardVersion('68700000')).toBe('PCA10028');
+        expect(getBoardVersion('68000000')).toBe('PCA10031');
+        expect(getBoardVersion('68200000')).toBe('PCA10040');
+        expect(getBoardVersion('68300000')).toBe('PCA10056');
+        expect(getBoardVersion('68400000')).toBe('PCA10068');
+
+        expect(getBoardVersion('12300000')).toBeUndefined();
+    });
 });
