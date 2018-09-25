@@ -36,6 +36,7 @@ import UsbBackend from './usb-backend';
 import SerialPortBackend from './serialport-backend';
 import JlinkBackend from './jlink-backend';
 import ErrorCodes from './util/errors';
+import { getBoardVersion } from './util/board-versions';
 
 const debug = Debug('device-lister:conflater');
 
@@ -212,3 +213,4 @@ export default class DeviceLister extends EventEmitter {
     }
 }
 DeviceLister.ErrorCodes = ErrorCodes;
+DeviceLister.getBoardVersion = getBoardVersion;

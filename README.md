@@ -123,6 +123,37 @@ setTimeout(function(){ lister.stop(); }, 5000);
 
 ```
 
+## Development
+
+### Build
+
+The project is using `rollup.js`, so the following command is needed to run the build:
+    npm run rollup
+
+
+### Test
+
+#### Equipments
+
+The project comes with automated integration tests in the `test` directory.
+In order to run the basic tests, the following devices must be connected to the PC:
+* JLink devices
+* Nordic USB devices
+
+In order to run the full tests, e.g. on the build server,
+the following device must be connected to the PC together with environment variables set (see below):
+* a nRF52840 development kit attached to the PC on both JLink port and CDC ACM port
+
+#### Environment Variables
+
+The following environment variables need to be set to specify certain devices for the tests.
+* NRF52840_DK_JLINK_SERIAL_NUMBER
+* NRF52840_DK_USB_SERIAL_NUMBER
+
+To run the tests:
+
+    npm test
+
 ## Error Codes
 
 Error codes are accessed from `DeviceLister.ErrorCodes`.

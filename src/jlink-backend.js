@@ -33,6 +33,7 @@ import nrfjprogjs from 'pc-nrfjprog-js';
 import Debug from 'debug';
 import AbstractBackend from './abstract-backend';
 import ErrorCodes from './util/errors';
+import { getBoardVersion } from './util/board-versions';
 
 const debug = Debug('device-lister:jlink');
 
@@ -77,6 +78,7 @@ export default class JlinkBackend extends AbstractBackend {
                 //
                 // Pad the serial number with '0' with the assumed serial number length of 12
                 serialNumber: serialnumber.toString().padStart(12, '0'),
+                boardVersion: getBoardVersion(serialnumber),
                 traits: ['jlink'],
             };
         })).catch(err => {
