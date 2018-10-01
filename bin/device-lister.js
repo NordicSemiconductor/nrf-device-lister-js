@@ -48,8 +48,11 @@ args
     .option('-s, --serialport', 'Include serial ports (including USB CDC ACMs)')
     .option('-j, --jlink', 'Include J-link probes (those available through pc-nrfjprog-js)')
     .option('-b, --find-by-sn [serialNumber]', 'Find device by serial number')
+    .option('-a, --list-all', 'List all detected devices')
+    .option('-i, --list-all-info', 'List information of all detected devices')
     .option('-w, --watch', 'Keep outputting a list of devices on any changes')
     .option('-d, --debug', 'Enable debug messages')
+    .option('-e, --error', 'Enable error messages')
     .parse(process.argv);
 
 if (args.debug) {
@@ -57,7 +60,7 @@ if (args.debug) {
 }
 
 if (!args.usb && !args.nordicUsb && !args.nordicDfu && !args.seggerUsb &&
-    !args.serialport && !args.jlink && !args.findBySn) {
+    !args.serialport && !args.jlink && args.error) {
     console.error('No device traits specified, no devices will be listed!');
     console.error('Run with the --help option to see types of devices to watch for.');
 }
@@ -72,7 +75,7 @@ const lister = new DeviceLister({
 });
 
 lister.on('error', error => {
-    if (args.findBySn) {
+    if (!args.error) {
         return;
     }
     if (error.usb) {
@@ -88,7 +91,7 @@ lister.on('error', error => {
 });
 
 lister.on('conflated', deviceMap => {
-    if (args.findBySn) {
+    if (!args.debug) {
         return;
     }
     // Pretty-print some info
@@ -108,6 +111,31 @@ if (args.watch) {
 
 if (args.findBySn) {
     lister.reenumerate().then(devices => {
-        console.log(devices.get(args.findBySn));
+        const device = devices.get(args.findBySn);
+        console.log(JSON.stringify(device, null, 2));
+    });
+}
+
+if (args.listAll) {
+    lister.reenumerate().then(devices => {
+        const result = [];
+        devices.forEach(device => {
+            result.push(device);
+        });
+        console.log(JSON.stringify(result, null, 2));
+    });
+}
+
+if (args.listAllInfo) {
+    lister.reenumerate().then(devices => {
+        const result = [];
+        devices.forEach(device => {
+            result.push({
+                serialNumber: device.serialNumber,
+                boardVersion: device.boardVersion,
+                ...device.serialport,
+            });
+        });
+        console.log(JSON.stringify(result, null, 2));
     });
 }
