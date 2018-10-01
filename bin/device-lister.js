@@ -112,7 +112,7 @@ if (args.watch) {
 if (args.findBySn) {
     lister.reenumerate().then(devices => {
         const device = devices.get(args.findBySn);
-        console.log(JSON.stringify(device), null, 2);
+        console.log(JSON.stringify(device, null, 2));
     });
 }
 
