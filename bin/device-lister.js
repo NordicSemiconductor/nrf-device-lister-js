@@ -48,6 +48,7 @@ args
     .option('-s, --serialport', 'Include serial ports (including USB CDC ACMs)')
     .option('-j, --jlink', 'Include J-link probes (those available through pc-nrfjprog-js)')
     .option('-b, --find-by-sn [serialNumber]', 'Find device by serial number')
+    .option('-a, --list-all', 'List information of all detected devices')
     .option('-w, --watch', 'Keep outputting a list of devices on any changes')
     .option('-d, --debug', 'Enable debug messages')
     .parse(process.argv);
@@ -108,6 +109,17 @@ if (args.watch) {
 
 if (args.findBySn) {
     lister.reenumerate().then(devices => {
-        console.log(devices.get(args.findBySn));
+        const device = devices.get(args.findBySn);
+        if (!device) return;
+        const result = {
+            serialNumber: device.serialNumber,
+            comName: device.serialport.comName,
+            pnpId: device.serialport.pnpId,
+            locationId: device.serialport.locationId,
+            vendorId: device.serialport.vendorId,
+            productId: device.serialport.productId,
+            boardVersion: device.boardVersion,
+        };
+        console.log(JSON.stringify(result));
     });
 }
