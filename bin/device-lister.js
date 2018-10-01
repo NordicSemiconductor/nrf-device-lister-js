@@ -132,12 +132,8 @@ if (args.listAllInfo) {
         devices.forEach(device => {
             result.push({
                 serialNumber: device.serialNumber,
-                comName: device.serialport.comName,
-                pnpId: device.serialport.pnpId,
-                locationId: device.serialport.locationId,
-                vendorId: device.serialport.vendorId,
-                productId: device.serialport.productId,
                 boardVersion: device.boardVersion,
+                ...device.serialport,
             });
         });
         console.log(JSON.stringify(result));
