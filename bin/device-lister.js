@@ -112,7 +112,7 @@ if (args.watch) {
 if (args.findBySn) {
     lister.reenumerate().then(devices => {
         const device = devices.get(args.findBySn);
-        console.log(JSON.stringify(device));
+        console.log(JSON.stringify(device), null, 2);
     });
 }
 
@@ -122,7 +122,7 @@ if (args.listAll) {
         devices.forEach(device => {
             result.push(device);
         });
-        console.log(JSON.stringify(result));
+        console.log(JSON.stringify(result, null, 2));
     });
 }
 
@@ -136,6 +136,6 @@ if (args.listAllInfo) {
                 ...device.serialport,
             });
         });
-        console.log(JSON.stringify(result));
+        console.log(JSON.stringify(result, null, 2));
     });
 }
