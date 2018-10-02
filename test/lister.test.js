@@ -109,11 +109,12 @@ describe('The Device Lister Dynamic', () => {
 
 describe('The Device Versions', () => {
     it('shall get corerct device board versions', async () => {
-        expect(getBoardVersion('68700000')).toBe('PCA10028');
         expect(getBoardVersion('68000000')).toBe('PCA10031');
+        expect(getBoardVersion('68100000')).toBe('PCA10028');
         expect(getBoardVersion('68200000')).toBe('PCA10040');
         expect(getBoardVersion('68300000')).toBe('PCA10056');
         expect(getBoardVersion('68400000')).toBe('PCA10068');
+        expect(getBoardVersion('68600000')).toBe('PCA10090');
 
         expect(getBoardVersion('12300000')).toBeUndefined();
     });

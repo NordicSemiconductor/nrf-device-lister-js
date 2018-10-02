@@ -1,6 +1,6 @@
 export const BoardVersion = {
-    681: 'PCA10028',
     680: 'PCA10031',
+    681: 'PCA10028',
     682: 'PCA10040',
     683: 'PCA10056',
     684: 'PCA10068',
