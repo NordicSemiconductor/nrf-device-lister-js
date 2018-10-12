@@ -30,7 +30,7 @@
  */
 
 import EventEmitter from 'events';
-import Usb from 'usb';
+import Usb from 'nrf-usb';
 import Debug from 'debug';
 import UsbBackend from './usb-backend';
 import SerialPortBackend from './serialport-backend';

@@ -1,6 +1,6 @@
 {
   "name": "nrf-device-lister",
-  "version": "2.0.3-alpha",
+  "version": "2.0.3-alpha.0",
   "description": "List USB/serialport/jlink devices based on traits and conflate them by serial number",
   "module": "src/device-lister.js",
   "main": "dist/device-lister.js",
@@ -28,7 +28,7 @@
     "debug": "^3.1.0",
     "serialport": "^6.2.0",
     "pc-nrfjprog-js": "1.4.0-alpha",
-    "usb": "^1.3.2"
+    "nrf-usb": "^0.0.1"
   },
   "devDependencies": {
     "eslint": "^4.16.0",
