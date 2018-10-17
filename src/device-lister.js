@@ -186,8 +186,19 @@ export default class DeviceLister extends EventEmitter {
 
                     let device = deviceMap.get(serialNumber) || {};
                     const { traits } = device;
-                    device = Object.assign({}, device, result);
-                    if (traits) {
+
+                    // fix the result by renaming serialport object to
+                    // serialport.1 for the 2nd port, serialport.2 for the 3rd...
+                    // before merging it to the final device object
+                    const fixedResult = result;
+                    const n = Object.keys(device).filter(k => k.startsWith('serialport')).length;
+                    if (n > 0) {
+                        fixedResult[`serialport.${n}`] = result.serialport;
+                        delete fixedResult.serialport;
+                    }
+
+                    device = Object.assign({}, device, fixedResult);
+                    if (traits && !traits.includes(result.traits[0])) {
                         device.traits = result.traits.concat(traits);
                     }
                     deviceMap.set(serialNumber, device);

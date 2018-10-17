@@ -13,7 +13,7 @@ export default [
             'events',
             'util',
             'debug',
-            'usb',
+            'nrf-usb',
             'serialport',
             'pc-nrfjprog-js',
         ],
