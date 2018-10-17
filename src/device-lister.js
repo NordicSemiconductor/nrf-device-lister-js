@@ -191,10 +191,12 @@ export default class DeviceLister extends EventEmitter {
                     // serialport.1 for the 2nd port, serialport.2 for the 3rd...
                     // before merging it to the final device object
                     const fixedResult = result;
-                    const n = Object.keys(device).filter(k => k.startsWith('serialport')).length;
-                    if (n > 0) {
-                        fixedResult[`serialport.${n}`] = result.serialport;
-                        delete fixedResult.serialport;
+                    if (fixedResult.serialport) {
+                        const n = Object.keys(device).filter(k => k.startsWith('serialport')).length;
+                        if (n > 0) {
+                            fixedResult[`serialport.${n}`] = result.serialport;
+                            delete fixedResult.serialport;
+                        }
                     }
 
                     device = Object.assign({}, device, fixedResult);
