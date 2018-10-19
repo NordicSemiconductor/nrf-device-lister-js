@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Usb from 'usb';
+import Usb from 'nrf-usb';
 import Debug from 'debug';
 import { Mutex } from 'await-semaphore';
 import AbstractBackend from './abstract-backend';
