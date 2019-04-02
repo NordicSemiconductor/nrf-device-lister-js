@@ -29,11 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import SerialPort from 'serialport';
-import Debug from 'debug';
-import AbstractBackend from './abstract-backend';
-import ErrorCodes from './util/errors';
-import { getBoardVersion } from './util/board-versions';
+const SerialPort = require('serialport');
+const Debug = require('debug');
+const AbstractBackend = require('./abstract-backend');
+const ErrorCodes = require('./util/errors');
+const { getBoardVersion } = require('./util/board-versions');
 
 const debug = Debug('device-lister:serialport');
 
@@ -50,7 +50,7 @@ function getSerialPorts() {
     });
 }
 
-export default class SerialPortBackend extends AbstractBackend {
+class SerialPortBackend extends AbstractBackend {
     /* Returns a Promise to a list of objects, like:
      *
      * [{
@@ -108,3 +108,5 @@ export default class SerialPortBackend extends AbstractBackend {
             });
     }
 }
+
+module.exports = SerialPortBackend;

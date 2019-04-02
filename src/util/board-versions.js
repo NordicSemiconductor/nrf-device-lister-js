@@ -1,4 +1,4 @@
-export const BoardVersion = {
+const BoardVersion = {
     680: 'PCA10031',
     681: 'PCA10028',
     682: 'PCA10040',
@@ -8,8 +8,13 @@ export const BoardVersion = {
     960: 'PCA10090',
 };
 
-export const getBoardVersion = serialNumber => {
+const getBoardVersion = serialNumber => {
     const sn = parseInt(serialNumber, 10).toString();
     const digits = sn.substring(0, 3);
     return BoardVersion[digits];
+};
+
+module.exports = {
+    BoardVersion,
+    getBoardVersion,
 };

@@ -29,21 +29,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import EventEmitter from 'events';
-import Usb from 'usb';
-import Debug from 'debug';
-import UsbBackend from './usb-backend';
-import SerialPortBackend from './serialport-backend';
-import JlinkBackend from './jlink-backend';
-import ErrorCodes from './util/errors';
-import { getBoardVersion } from './util/board-versions';
+const EventEmitter = require('events');
+const Usb = require('usb');
+const Debug = require('debug');
+const UsbBackend = require('./usb-backend');
+const SerialPortBackend = require('./serialport-backend');
+const JlinkBackend = require('./jlink-backend');
+const ErrorCodes = require('./util/errors');
+const { getBoardVersion } = require('./util/board-versions');
 
 const debug = Debug('device-lister:conflater');
 
 const SEGGER_VENDOR_ID = 0x1366;
 const NORDIC_VENDOR_ID = 0x1915;
 
-export default class DeviceLister extends EventEmitter {
+class DeviceLister extends EventEmitter {
     constructor(traits = {}) {
         super();
 
@@ -227,3 +227,5 @@ export default class DeviceLister extends EventEmitter {
 }
 DeviceLister.ErrorCodes = ErrorCodes;
 DeviceLister.getBoardVersion = getBoardVersion;
+
+module.exports = DeviceLister;

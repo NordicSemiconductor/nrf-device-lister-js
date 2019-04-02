@@ -33,7 +33,7 @@
 
 'use strict';
 
-const DeviceLister = require('../');
+const DeviceLister = require('../src/device-lister');
 const { version } = require('../package.json');
 const args = require('commander');
 const debug = require('debug');

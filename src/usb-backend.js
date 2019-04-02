@@ -29,12 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Usb from 'usb';
-import Debug from 'debug';
-import { Mutex } from 'await-semaphore';
-import AbstractBackend from './abstract-backend';
-import { getStringDescriptors, openDevice, getDeviceId } from './util/usb';
-import ErrorCodes from './util/errors';
+const Usb = require('usb');
+const Debug = require('debug');
+const { Mutex } = require('await-semaphore');
+const AbstractBackend = require('./abstract-backend');
+const { getStringDescriptors, openDevice, getDeviceId } = require('./util/usb');
+const ErrorCodes = require('./util/errors');
 
 const debug = Debug('device-lister:usb');
 
@@ -138,7 +138,7 @@ function decorateError(err) {
 /**
  * Backend that enumerates usb devices.
  */
-export default class UsbBackend extends AbstractBackend {
+class UsbBackend extends AbstractBackend {
     /*
      * The constructor takes in two sets of filters. These must be objects,
      * with strings as keys and functions as values. These functions must
@@ -287,3 +287,5 @@ export default class UsbBackend extends AbstractBackend {
         Usb.removeListener('detach', this._boundRemoveCachedResult);
     }
 }
+
+module.exports = UsbBackend;

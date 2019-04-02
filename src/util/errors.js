@@ -1,4 +1,4 @@
-export default Object.freeze({
+module.exports = Object.freeze({
     CANNOT_INSTANTIATE_ABSTRACTBACKEND: 0,
     REENUMERATE_NOT_IMPLEMENTED: 1,
     RECEIVED_NEITHER_SNO_NOR_ERROR: 2,
