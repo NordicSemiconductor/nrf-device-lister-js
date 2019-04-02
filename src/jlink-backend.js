@@ -29,15 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import nrfjprogjs from 'pc-nrfjprog-js';
-import Debug from 'debug';
-import AbstractBackend from './abstract-backend';
-import ErrorCodes from './util/errors';
-import { getBoardVersion } from './util/board-versions';
+const nrfjprogjs = require('pc-nrfjprog-js');
+const Debug = require('debug');
+const AbstractBackend = require('./abstract-backend');
+const ErrorCodes = require('./util/errors');
+const { getBoardVersion } = require('./util/board-versions');
 
 const debug = Debug('device-lister:jlink');
 
-export default class JlinkBackend extends AbstractBackend {
+class JlinkBackend extends AbstractBackend {
     /* Returns a `Promise` to a list of objects, like:
      *
      * [{
@@ -90,3 +90,5 @@ export default class JlinkBackend extends AbstractBackend {
         });
     }
 }
+
+module.exports = JlinkBackend;

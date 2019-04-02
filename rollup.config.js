@@ -1,4 +1,4 @@
-import buble from 'rollup-plugin-buble';
+import commonjs from 'rollup-plugin-commonjs';
 import pkg from './package.json';
 
 export default [
@@ -18,7 +18,7 @@ export default [
             'pc-nrfjprog-js',
         ],
         plugins: [
-            buble({}),
+            commonjs({}),
         ],
     },
 ];

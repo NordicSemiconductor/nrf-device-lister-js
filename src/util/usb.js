@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import Debug from 'debug';
+const Debug = require('debug');
 
 const debug = Debug('device-lister:usb');
 
@@ -62,7 +62,7 @@ function getStringDescriptor(device, index) {
  * @param {Array<number>} indexes The indexes to get.
  * @returns {Promise} Promise that resolves with array of string descriptors.
  */
-export function getStringDescriptors(device, indexes) {
+function getStringDescriptors(device, indexes) {
     return indexes.reduce((prev, index) => (
         prev.then(descriptorValues => (
             getStringDescriptor(device, index)
@@ -77,7 +77,7 @@ export function getStringDescriptors(device, indexes) {
  * @param {Object} device The usb device to open.
  * @returns {Promise} Promise that resolves if successful, rejects if failed.
  */
-export function openDevice(device) {
+function openDevice(device) {
     return new Promise((res, rej) => {
         const tryOpen = (retries = 0) => {
             try {
@@ -108,7 +108,7 @@ export function openDevice(device) {
  * @param {Number} number The number to prefix and pad.
  * @returns {string} Prefixed and padded number.
  */
-export function hexpad4(number) {
+function hexpad4(number) {
     return `0x${number.toString(16).padStart(4, '0')}`;
 }
 
@@ -119,8 +119,15 @@ export function hexpad4(number) {
  * @param {Object} device The device to get an ID for.
  * @returns {string} String ID for the given device.
  */
-export function getDeviceId(device) {
+function getDeviceId(device) {
     const { busNumber, deviceAddress } = device;
     const { idVendor, idProduct } = device.deviceDescriptor;
     return `${busNumber}.${deviceAddress} ${hexpad4(idVendor)}/${hexpad4(idProduct)}`;
 }
+
+module.exports = {
+    getStringDescriptors,
+    openDevice,
+    hexpad4,
+    getDeviceId,
+};

@@ -33,7 +33,7 @@
 
 'use strict';
 
-const DeviceLister = require('../');
+const DeviceLister = require('../src/device-lister');
 const { version } = require('../package.json');
 const args = require('commander');
 const debug = require('debug');
@@ -53,6 +53,8 @@ args
     .option('-w, --watch', 'Keep outputting a list of devices on any changes')
     .option('-d, --debug', 'Enable debug messages')
     .option('-e, --error', 'Enable error messages')
+    .option('-p, --ports-by-board [board]', 'List serialports by PCA board id')
+    .option('-S, --serialnumbers-by-board [board]', 'List serial numbers by PCA board id')
     .parse(process.argv);
 
 if (args.debug) {
@@ -63,6 +65,15 @@ if (!args.usb && !args.nordicUsb && !args.nordicDfu && !args.seggerUsb &&
     !args.serialport && !args.jlink && args.error) {
     console.error('No device traits specified, no devices will be listed!');
     console.error('Run with the --help option to see types of devices to watch for.');
+}
+
+if (args.listAll || args.listAllInfo || args.portsByBoard || args.serialnumbersByBoard) {
+    args.nordicUsb = true;
+    args.serialport = true;
+    args.seggerUsb = true;
+    args.nordicUsb = true;
+    args.nordicDfu = true;
+    args.jlink = true;
 }
 
 const lister = new DeviceLister({
@@ -137,5 +148,29 @@ if (args.listAllInfo) {
             });
         });
         console.log(JSON.stringify(result, null, 2));
+    });
+}
+
+if (args.portsByBoard) {
+    lister.reenumerate().then(devices => {
+        const result = [];
+        devices.forEach(d => {
+            if (d.boardVersion === args.portsByBoard) {
+                result.push(d.serialport.comName);
+            }
+        });
+        console.log(result.join(' '));
+    });
+}
+
+if (args.serialnumbersByBoard) {
+    lister.reenumerate().then(devices => {
+        const result = [];
+        devices.forEach(d => {
+            if (d.boardVersion === args.serialnumbersByBoard) {
+                result.push(d.serialNumber);
+            }
+        });
+        console.log(result.join(' '));
     });
 }
