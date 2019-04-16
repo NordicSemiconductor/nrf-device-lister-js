@@ -1,6 +1,9 @@
 
 # nrf-device-lister
 
+[![Build Status](https://dev.azure.com/NordicSemiconductor/Wayland/_apis/build/status/nrf-device-lister-js?branchName=master)](https://dev.azure.com/NordicSemiconductor/Wayland/_build/latest?definitionId=13&branchName=master)
+[![License](https://img.shields.io/badge/license-Modified%20BSD%20License-blue.svg)](LICENSE)
+
 List USB/serialport/jlink devices based on traits and conflate them by serial number
 
 This is part of [Nordic Semiconductor](http://www.nordicsemi.com/)'s javascript tools to
