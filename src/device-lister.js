@@ -42,6 +42,7 @@ const debug = Debug('device-lister:conflater');
 
 const SEGGER_VENDOR_ID = 0x1366;
 const NORDIC_VENDOR_ID = 0x1915;
+const NORDIC_DEVICE_WITH_DFU_TRIGGER = 0xC00A;
 
 class DeviceLister extends EventEmitter {
     constructor(traits = {}) {
@@ -70,6 +71,7 @@ class DeviceLister extends EventEmitter {
         if (nordicUsb) {
             usbDeviceClosedFilters.nordicUsb = device => (
                 device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID
+                && device.deviceDescriptor.idProduct === NORDIC_DEVICE_WITH_DFU_TRIGGER
             );
         }
         if (seggerUsb) {
