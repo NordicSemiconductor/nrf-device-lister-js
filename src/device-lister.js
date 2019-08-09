@@ -78,17 +78,18 @@ class DeviceLister extends EventEmitter {
             );
         }
         if (nordicDfu) {
-            usbDeviceOpenFilters.nordicDfu = device =>
-                device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID &&
-                device.interfaces.some(iface => (
-                    iface.descriptor.bInterfaceClass === 255 &&
-                    iface.descriptor.bInterfaceSubClass === 1 &&
-                    iface.descriptor.bInterfaceProtocol === 1
-                ));
+            usbDeviceOpenFilters.nordicDfu = device => (
+                device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID
+                && device.interfaces.some(iface => (
+                    iface.descriptor.bInterfaceClass === 255
+                    && iface.descriptor.bInterfaceSubClass === 1
+                    && iface.descriptor.bInterfaceProtocol === 1
+                ))
+            );
         }
 
-        if (Object.keys(usbDeviceClosedFilters).length > 0 ||
-            Object.keys(usbDeviceOpenFilters).length > 0) {
+        if (Object.keys(usbDeviceClosedFilters).length > 0
+            || Object.keys(usbDeviceOpenFilters).length > 0) {
             this._backends.push(new UsbBackend(usbDeviceClosedFilters, usbDeviceOpenFilters));
         }
         if (serialport) { this._backends.push(new SerialPortBackend()); }
