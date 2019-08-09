@@ -37,8 +37,8 @@
 'use strict';
 
 const path = require('path');
-const DeviceLister = require('../dist/device-lister');
 const nrfjprog = require('pc-nrfjprog-js');
+const DeviceLister = require('../dist/device-lister');
 
 const { getBoardVersion } = DeviceLister;
 
