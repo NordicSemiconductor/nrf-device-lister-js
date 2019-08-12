@@ -56,7 +56,9 @@ describe('The Device Lister Traits', () => {
         expect(Array.from(devices.values()).find(d => d.traits.includes('jlink'))).not.toBeUndefined();
     });
 
-    it('shall list nordic usb devices', async () => {
+    // skip this test, since nordicUsb devices are filtered out of
+    // usb backend due to Windows LIBUSB_ERROR
+    it.skip('shall list nordic usb devices', async () => {
         const devices = await new DeviceLister({
             nordicUsb: true,
         }).reenumerate();
