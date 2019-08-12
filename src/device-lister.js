@@ -42,6 +42,7 @@ const debug = Debug('device-lister:conflater');
 
 const SEGGER_VENDOR_ID = 0x1366;
 const NORDIC_VENDOR_ID = 0x1915;
+const NORDIC_DEVICE_WITH_DFU_TRIGGER = 0xC00A;
 
 class DeviceLister extends EventEmitter {
     constructor(traits = {}) {
@@ -70,6 +71,7 @@ class DeviceLister extends EventEmitter {
         if (nordicUsb) {
             usbDeviceClosedFilters.nordicUsb = device => (
                 device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID
+                && device.deviceDescriptor.idProduct === NORDIC_DEVICE_WITH_DFU_TRIGGER
             );
         }
         if (seggerUsb) {
@@ -78,17 +80,18 @@ class DeviceLister extends EventEmitter {
             );
         }
         if (nordicDfu) {
-            usbDeviceOpenFilters.nordicDfu = device =>
-                device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID &&
-                device.interfaces.some(iface => (
-                    iface.descriptor.bInterfaceClass === 255 &&
-                    iface.descriptor.bInterfaceSubClass === 1 &&
-                    iface.descriptor.bInterfaceProtocol === 1
-                ));
+            usbDeviceOpenFilters.nordicDfu = device => (
+                device.deviceDescriptor.idVendor === NORDIC_VENDOR_ID
+                && device.interfaces.some(iface => (
+                    iface.descriptor.bInterfaceClass === 255
+                    && iface.descriptor.bInterfaceSubClass === 1
+                    && iface.descriptor.bInterfaceProtocol === 1
+                ))
+            );
         }
 
-        if (Object.keys(usbDeviceClosedFilters).length > 0 ||
-            Object.keys(usbDeviceOpenFilters).length > 0) {
+        if (Object.keys(usbDeviceClosedFilters).length > 0
+            || Object.keys(usbDeviceOpenFilters).length > 0) {
             this._backends.push(new UsbBackend(usbDeviceClosedFilters, usbDeviceOpenFilters));
         }
         if (serialport) { this._backends.push(new SerialPortBackend()); }
