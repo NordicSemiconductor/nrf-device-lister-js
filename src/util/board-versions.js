@@ -4,6 +4,7 @@ const BoardVersion = {
     682: 'PCA10040',
     683: 'PCA10056',
     684: 'PCA10068',
+    6852: 'PCA10100',
     686: 'PCA10064',
     960: 'PCA10090',
 };
@@ -13,8 +14,9 @@ const getBoardVersion = serialNumber => {
         return serialNumber.toString().split('_')[0];
     }
     const sn = parseInt(serialNumber, 10).toString();
-    const digits = sn.substring(0, 3);
-    return BoardVersion[digits];
+    const digits4 = sn.substring(0, 4);
+    const digits3 = sn.substring(0, 3);
+    return BoardVersion[digits4] || BoardVersion[digits3];
 };
 
 module.exports = {
