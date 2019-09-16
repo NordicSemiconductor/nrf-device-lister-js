@@ -84,13 +84,11 @@ function openDevice(device) {
                 device.open();
                 res();
             } catch (error) {
-                if (process.platform === 'win32' &&
-                    retries < 5 &&
-                    error.message === 'LIBUSB_ERROR_ACCESS') {
-                    // In win platforms, the winUSB driver might allow only one
-                    // process to access the USB device, potentially creating
-                    // race conditions. Mitigate this with an auto-retry mechanism.
-                    debug(`Got LIBUSB_ERROR_ACCESS on win32, retrying (attempt ${retries})...`);
+                if (retries < 5) {
+                    // For various reasons race-conditions need to be mitigated, e.g:
+                    //  - winUSB driver allows only one process to access the USB device
+                    //  - virtual machine or slow hardware
+                    debug(`Got LIBUSB_ERROR, retrying (attempt ${retries})...`);
                     const delay = (50 * retries * retries) + (100 * Math.random());
                     setTimeout(() => tryOpen(retries + 1), delay);
                 } else {
