@@ -14,9 +14,8 @@ const getBoardVersion = serialNumber => {
         return serialNumber.toString().split('_')[0];
     }
     const sn = parseInt(serialNumber, 10).toString();
-    const digits4 = sn.substring(0, 4);
-    const digits3 = sn.substring(0, 3);
-    return BoardVersion[digits4] || BoardVersion[digits3];
+    return BoardVersion[sn.substring(0, 4)]
+        || BoardVersion[sn.substring(0, 3)];
 };
 
 module.exports = {
