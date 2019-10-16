@@ -116,7 +116,7 @@ describe('The Device Versions', () => {
         expect(getBoardVersion('68200000')).toBe('PCA10040');
         expect(getBoardVersion('68300000')).toBe('PCA10056');
         expect(getBoardVersion('68400000')).toBe('PCA10068');
-        expect(getBoardVersion('68520000')).toBe('PCA10100');
+        expect(getBoardVersion('68500000')).toBe('PCA10100');
         expect(getBoardVersion('68600000')).toBe('PCA10064');
         expect(getBoardVersion('96000000')).toBe('PCA10090');
 

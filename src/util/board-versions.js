@@ -4,9 +4,9 @@ const BoardVersion = {
     682: 'PCA10040',
     683: 'PCA10056',
     684: 'PCA10068',
-    6852: 'PCA10100',
+    685: 'PCA10100',
     686: 'PCA10064',
-    960: 'PCA10090',
+    9600: 'PCA10090',
 };
 
 const getBoardVersion = serialNumber => {
