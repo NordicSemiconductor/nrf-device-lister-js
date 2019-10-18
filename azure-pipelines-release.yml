@@ -13,7 +13,7 @@ jobs:
       npm i
       npm run rollup
   - script: |
-      npm config set //npm.nordicsemi.no/:_authToken" $(WAYLAND_NPM_TOKEN_INTERNAL)
+      npm config set //npm.nordicsemi.no/:_authToken $(WAYLAND_NPM_TOKEN_INTERNAL)
       npm config set registry https://npm.nordicsemi.no/
       npm config set strict-ssl false
       npm unpublish
