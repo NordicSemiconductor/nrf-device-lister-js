@@ -1,0 +1,20 @@
+trigger:
+- release/internal/*
+
+jobs:
+- job: Build
+  pool:
+    vmImage: 'Ubuntu-16.04'
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: 10
+  - script: |
+      npm i
+      npm run rollup
+  - script: |
+      npm config set //npm.nordicsemi.no/:_authToken" ${NPM_TOKEN}
+      npm config set registry https://npm.nordicsemi.no/
+      npm config set strict-ssl false
+      npm unpublish
+      npm publish
