@@ -12,10 +12,11 @@ jobs:
     inputs:
       versionSpec: 10
   - script: |
+      npm i
+  - script: |
       npm config set //npm.nordicsemi.no/:_authToken $(WAYLAND_NPM_TOKEN_INTERNAL)
       npm config set registry https://npm.nordicsemi.no/
       npm config set strict-ssl false
-      npm i
       npm run rollup
       npm unpublish --force
       npm publish
