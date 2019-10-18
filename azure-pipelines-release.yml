@@ -5,6 +5,8 @@ jobs:
 - job: Build
   pool:
     vmImage: 'Ubuntu-16.04'
+  variables:
+    - group: wayland
   steps:
   - task: NodeTool@0
     inputs:
