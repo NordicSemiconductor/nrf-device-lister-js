@@ -27,7 +27,7 @@
     "commander": "^2.20.0",
     "debug": "^4.1.1",
     "serialport": "^7.1.5",
-    "pc-nrfjprog-js": "^1.5.4",
+    "pc-nrfjprog-js": "^1.5.9",
     "usb": "^1.6.0"
   },
   "devDependencies": {
