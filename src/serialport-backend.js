@@ -84,10 +84,12 @@ class SerialPortBackend extends AbstractBackend {
                 ports.map(port => {
                     debug('Enumerated:', port.comName, port.serialNumber);
                     if (port.serialNumber !== undefined) {
+                        let serialNumber = port.serialNumber.toUpperCase().split('_').pop();
+                        let boardVersion = getBoardVersion(serialNumber, port);
                         return {
-                            serialNumber: port.serialNumber,
+                            serialNumber,
                             serialport: port,
-                            boardVersion: getBoardVersion(port.serialNumber),
+                            boardVersion,
                             traits: ['serialport'],
                         };
                     }

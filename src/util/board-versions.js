@@ -10,7 +10,11 @@ const BoardVersion = {
     9601: 'PCA10095',
 };
 
-const getBoardVersion = serialNumber => {
+const getBoardVersion = (serialNumber, extra = {}) => {
+    const { vendorId, productId } = extra;
+    if (vendorId === '1915' && productId === '9100') {
+        return 'PCA20035';
+    }
     if (serialNumber.toString().startsWith('PCA')) {
         return serialNumber.toString().split('_')[0];
     }
