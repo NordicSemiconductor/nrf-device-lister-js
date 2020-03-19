@@ -8,6 +8,7 @@ const BoardVersion = {
     686: 'PCA10064',
     9600: 'PCA10090',
     9601: 'PCA10095',
+    9602: 'PCA10115',
 };
 
 const getBoardVersion = serialNumber => {
