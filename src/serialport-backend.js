@@ -37,6 +37,21 @@ const { getBoardVersion } = require('./util/board-versions');
 
 const debug = Debug('device-lister:serialport');
 
+let hasShownDeprecatedPropertyWarning = false;
+const mayShowWarningAboutDeprecatedProperty = () => {
+    if (!hasShownDeprecatedPropertyWarning) {
+        console.warn('Using the property "comName" has been deprecated. You should now use "path". The property will be removed in the next major release.');
+    }
+    hasShownDeprecatedPropertyWarning = true;
+};
+const withDucktapedComName = port => ({
+    ...port,
+    get comName() {
+        mayShowWarningAboutDeprecatedProperty();
+        return port.path;
+    },
+});
+
 class SerialPortBackend extends AbstractBackend {
     /* Returns a Promise to a list of objects, like:
      *
@@ -73,13 +88,13 @@ class SerialPortBackend extends AbstractBackend {
                     if (port.serialNumber !== undefined) {
                         return {
                             serialNumber: port.serialNumber,
-                            serialport: port,
+                            serialport: withDucktapedComName(port),
                             boardVersion: getBoardVersion(port.serialNumber),
                             traits: ['serialport'],
                         };
                     }
                     const err = new Error(`Could not fetch serial number for serial port at ${port.path}`);
-                    err.serialport = port;
+                    err.serialport = withDucktapedComName(port);
                     err.errorCode = ErrorCodes.COULD_NOT_FETCH_SNO_FOR_PORT;
                     return {
                         error: err,
