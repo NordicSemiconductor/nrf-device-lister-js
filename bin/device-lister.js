@@ -33,10 +33,10 @@
 
 'use strict';
 
-const DeviceLister = require('../src/device-lister');
-const { version } = require('../package.json');
 const args = require('commander');
 const debug = require('debug');
+const DeviceLister = require('../src/device-lister');
+const { version } = require('../package.json');
 
 args
     .version(version)
@@ -61,8 +61,14 @@ if (args.debug) {
     debug.enable('device-lister:*');
 }
 
-if (!args.usb && !args.nordicUsb && !args.nordicDfu && !args.seggerUsb &&
-    !args.serialport && !args.jlink && args.error) {
+if (!args.usb
+    && !args.nordicUsb
+    && !args.nordicDfu
+    && !args.seggerUsb
+    && !args.serialport
+    && !args.jlink
+    && args.error
+) {
     console.error('No device traits specified, no devices will be listed!');
     console.error('Run with the --help option to see types of devices to watch for.');
 }
