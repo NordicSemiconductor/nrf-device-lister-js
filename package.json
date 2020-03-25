@@ -26,8 +26,8 @@
     "await-semaphore": "^0.1.3",
     "commander": "^2.20.0",
     "debug": "^4.1.1",
-    "serialport": "^7.1.5",
     "pc-nrfjprog-js": "^1.6.0",
+    "serialport": "^8.0.7",
     "usb": "^1.6.0"
   },
   "devDependencies": {

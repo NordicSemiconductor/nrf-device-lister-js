@@ -95,7 +95,7 @@ lister.on('error', error => {
             error.usb.deviceDescriptor.idProduct.toString(16).padStart(4, '0')}: ${
             error.message}`);
     } else if (error.serialport) {
-        console.error(`Error from a serial port at ${error.serialport.comName}: `, error.message);
+        console.error(`Error from a serial port at ${error.serialport.path}: `, error.message);
     } else {
         console.error(error);
     }
@@ -156,7 +156,7 @@ if (args.portsByBoard) {
         const result = [];
         devices.forEach(d => {
             if (d.boardVersion === args.portsByBoard) {
-                result.push(d.serialport.comName);
+                result.push(d.serialport.path);
             }
         });
         console.log(result.join(' '));

@@ -37,19 +37,6 @@ const { getBoardVersion } = require('./util/board-versions');
 
 const debug = Debug('device-lister:serialport');
 
-
-function getSerialPorts() {
-    return new Promise((resolve, reject) => {
-        SerialPort.list((err, ports) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(ports);
-            }
-        });
-    });
-}
-
 class SerialPortBackend extends AbstractBackend {
     /* Returns a Promise to a list of objects, like:
      *
@@ -57,7 +44,7 @@ class SerialPortBackend extends AbstractBackend {
      *   traits: 'serialport'
      *   serialNumber: '1234',
      *   serialport: {
-     *      comName: 'COM3',
+     *      path: 'COM3',
      *      manufacturer: 'Arduino LLC (www.arduino.cc)',
      *      serialNumber: '752303138333518011C1',
      *      pnpId: 'USB\\VID_2341&PID_0043\\752303138333518011C1',
@@ -79,10 +66,10 @@ class SerialPortBackend extends AbstractBackend {
     /* eslint-disable-next-line class-methods-use-this */
     reenumerate() {
         debug('Reenumerating...');
-        return getSerialPorts()
+        return SerialPort.list()
             .then(ports => (
                 ports.map(port => {
-                    debug('Enumerated:', port.comName, port.serialNumber);
+                    debug('Enumerated:', port.path, port.serialNumber);
                     if (port.serialNumber !== undefined) {
                         return {
                             serialNumber: port.serialNumber,
@@ -91,12 +78,12 @@ class SerialPortBackend extends AbstractBackend {
                             traits: ['serialport'],
                         };
                     }
-                    const err = new Error(`Could not fetch serial number for serial port at ${port.comName}`);
+                    const err = new Error(`Could not fetch serial number for serial port at ${port.path}`);
                     err.serialport = port;
                     err.errorCode = ErrorCodes.COULD_NOT_FETCH_SNO_FOR_PORT;
                     return {
                         error: err,
-                        errorSource: `serialport-${port.comName}`,
+                        errorSource: `serialport-${port.path}`,
                     };
                 })
             )).catch(error => {
