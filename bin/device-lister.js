@@ -33,10 +33,10 @@
 
 'use strict';
 
-const DeviceLister = require('../src/device-lister');
-const { version } = require('../package.json');
 const args = require('commander');
 const debug = require('debug');
+const DeviceLister = require('../src/device-lister');
+const { version } = require('../package.json');
 
 args
     .version(version)
@@ -61,8 +61,14 @@ if (args.debug) {
     debug.enable('device-lister:*');
 }
 
-if (!args.usb && !args.nordicUsb && !args.nordicDfu && !args.seggerUsb &&
-    !args.serialport && !args.jlink && args.error) {
+if (!args.usb
+    && !args.nordicUsb
+    && !args.nordicDfu
+    && !args.seggerUsb
+    && !args.serialport
+    && !args.jlink
+    && args.error
+) {
     console.error('No device traits specified, no devices will be listed!');
     console.error('Run with the --help option to see types of devices to watch for.');
 }
@@ -95,7 +101,7 @@ lister.on('error', error => {
             error.usb.deviceDescriptor.idProduct.toString(16).padStart(4, '0')}: ${
             error.message}`);
     } else if (error.serialport) {
-        console.error(`Error from a serial port at ${error.serialport.comName}: `, error.message);
+        console.error(`Error from a serial port at ${error.serialport.path}: `, error.message);
     } else {
         console.error(error);
     }
@@ -156,7 +162,7 @@ if (args.portsByBoard) {
         const result = [];
         devices.forEach(d => {
             if (d.boardVersion === args.portsByBoard) {
-                result.push(d.serialport.comName);
+                result.push(d.serialport.path);
             }
         });
         console.log(result.join(' '));

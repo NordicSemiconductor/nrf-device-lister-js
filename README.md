@@ -41,7 +41,7 @@ var lister = new DeviceLister({
 });
 
 
-// When started, the lister will emit three kinds of events:
+// When started, the lister will two three kinds of events:
 
 // The 'conflated' event fires whenever there is a new conflated list of
 // devices (i.e. after each reenumeration). This list is an instance of Map,
