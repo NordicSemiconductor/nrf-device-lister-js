@@ -69,7 +69,7 @@ lister.on('conflated', function(deviceMap){
             locationId: undefined,
             vendorId: '1366',
             productId: '1015',
-            comName: '/dev/ttyACM1' }
+            path: '/dev/ttyACM1' }
         }
     */
 });
@@ -102,7 +102,7 @@ lister.on('error', function(err){
     // be an `serialport` property with the serial port metadata:
     if (err.serialport) {
         console.error('Error originated from serial port device at ' +
-            err.serialport.comName
+            err.serialport.path
         );
     }
 });
