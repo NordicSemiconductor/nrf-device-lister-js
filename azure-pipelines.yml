@@ -20,8 +20,7 @@ jobs:
     displayName: 'Donwload internal nrfjprog for release'
   - bash: |
       set -o errexit -o pipefail
-      mv $(nrfjprogLinux.secureFilePath) nrfjprog.tar.gz
-      export LOCAL_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)/nrfjprog.tar.gz
+      export LOCAL_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)
       export ENABLE_DRAFT_TEST=true
       export NODE_PRE_GYP_GITHUB_TOKEN=$(WAYLAND_GITHUB_TOKEN)
       npm config set strict-ssl false
