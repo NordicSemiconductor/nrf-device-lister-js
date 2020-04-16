@@ -42,7 +42,7 @@ jobs:
       set -o errexit -o pipefail
       npm i
       npm run rollup
-    condition: nq(variables['release'], 'true')
+    condition: ne(variables['release'], 'true')
     displayName: 'Build'
   - bash: |
       set -o errexit -o pipefail
