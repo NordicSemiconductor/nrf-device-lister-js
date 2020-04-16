@@ -21,7 +21,7 @@ jobs:
   - bash: |
       mkdir nrfjprog
       mv $(nrfjprogLinux.secureFilePath) nrfjprog
-      export LOCAL_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)/nrfjprog
+      export EXIST_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)/nrfjprog
     condition: eq(variables['release'], 'true')
     displayName: 'Download internal nrfjprog for release'
   - bash: |
