@@ -16,13 +16,13 @@ jobs:
     name: nrfjprogLinux
     inputs:
       secureFile: "nrfjprog-10.7.0-linux_x64.tar.gz"
-    condition: and(eq(variables['release'], 'true'), contains(variables['image_name'], 'ubuntu'))
+    condition: eq(variables['release'], 'true')
     displayName: 'Donwload internal nrfjprog for release'
   - bash: |
       mkdir -p node_modules/pc-nrfjprog-js/nrfjprog
       echo $(nrfjprogLinux.secureFilePath)
       mv $(nrfjprogLinux.secureFilePath) node_modules/pc-nrfjprog-js/nrfjprog
-    condition: and(eq(variables['release'], 'true'), contains(variables['image_name'], 'ubuntu'))
+    condition: eq(variables['release'], 'true')
     displayName: 'Download internal nrfjprog for release'
   - bash: |
       set -o errexit -o pipefail
