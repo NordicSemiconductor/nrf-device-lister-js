@@ -21,7 +21,8 @@ jobs:
   - bash: |
       mkdir nrfjprog
       mv $(nrfjprogLinux.secureFilePath) nrfjprog
-      export EXIST_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)/nrfjprog
+      export LOCAL_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)/nrfjprog
+      export ENABLE_DRAFT_TEST=true
     condition: eq(variables['release'], 'true')
     displayName: 'Download internal nrfjprog for release'
   - bash: |
@@ -36,7 +37,6 @@ jobs:
       npm config set @types:registry https://registry.npmjs.org/
       npm config set string_decoder:registry https://registry.npmjs.org/
       npm config set glob:registry https://registry.npmjs.org/
-      export ENABLE_DRAFT_TEST=true
     condition: eq(variables['Release'], 'true')
     displayName: 'Set up internal NPM registry'
   - bash: |
