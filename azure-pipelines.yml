@@ -19,9 +19,9 @@ jobs:
     condition: eq(variables['release'], 'true')
     displayName: 'Donwload internal nrfjprog for release'
   - bash: |
-      mkdir -p node_modules/pc-nrfjprog-js/nrfjprog
-      echo $(nrfjprogLinux.secureFilePath)
-      mv $(nrfjprogLinux.secureFilePath) node_modules/pc-nrfjprog-js/nrfjprog
+      mkdir nrfjprog
+      mv $(nrfjprogLinux.secureFilePath) nrfjprog
+      export LOCAL_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)/nrfjprog
     condition: eq(variables['release'], 'true')
     displayName: 'Download internal nrfjprog for release'
   - bash: |
