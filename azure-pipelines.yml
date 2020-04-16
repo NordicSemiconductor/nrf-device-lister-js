@@ -5,15 +5,36 @@ trigger:
 jobs:
 - job: Build
   pool:
-    vmImage: 'Ubuntu-16.04'
+    vmImage: 'Ubuntu-18.04'
   steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: 10
-  - script: |
+      versionSpec: 12
+  - bash: |
+      set -o errexit -o pipefail
+      npm config set strict-ssl false
+      npm config set //npm.nordicsemi.no/:_authToken $(WAYLAND_NPM_TOKEN_INTERNAL)
+      npm config set registry https://npm.nordicsemi.no/
+      npm config set @babel:registry https://registry.npmjs.org/
+      npm config set @cnakazawa:registry https://registry.npmjs.org/
+      npm config set @jest:registry https://registry.npmjs.org/
+      npm config set @serialport:registry https://registry.npmjs.org/
+      npm config set @types:registry https://registry.npmjs.org/
+    condition: eq(variables['Release'], 'true')
+    displayName: 'Set up internal NPM registry'
+  - bash: |
       set -o errexit -o pipefail
       npm i
       npm run rollup
+  - bash: |
+      set -o errexit -o pipefail
+      npm pack
+      mv *.tgz ./build/stage
+    displayName: 'Pack and move package'
+  - task: PublishPipelineArtifact@1
+    inputs:
+      path: $(System.DefaultWorkingDirectory)/build/stage
+    displayName: 'Publish artifacts'
 
 - job: Test
   dependsOn: [
