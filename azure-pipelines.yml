@@ -6,6 +6,8 @@ jobs:
 - job: Build
   pool:
     vmImage: 'Ubuntu-18.04'
+  variables:
+    - group: wayland
   steps:
   - task: NodeTool@0
     inputs:
@@ -13,7 +15,7 @@ jobs:
   - bash: |
       set -o errexit -o pipefail
       npm config set strict-ssl false
-      npm config set //npm.nordicsemi.no/:_authToken $(WAYLAND_NPM_TOKEN_INTERNAL_PUBLISH)
+      npm config set //npm.nordicsemi.no/:_authToken $(WAYLAND_NPM_TOKEN_INTERNAL)
       npm config set registry https://npm.nordicsemi.no/
       npm config set @babel:registry https://registry.npmjs.org/
       npm config set @cnakazawa:registry https://registry.npmjs.org/
