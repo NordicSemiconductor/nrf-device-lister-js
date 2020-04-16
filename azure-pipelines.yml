@@ -19,14 +19,11 @@ jobs:
     condition: eq(variables['release'], 'true')
     displayName: 'Donwload internal nrfjprog for release'
   - bash: |
-      mkdir nrfjprog
-      mv $(nrfjprogLinux.secureFilePath) nrfjprog
-      export LOCAL_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)/nrfjprog
-      export ENABLE_DRAFT_TEST=true
-    condition: eq(variables['release'], 'true')
-    displayName: 'Download internal nrfjprog for release'
-  - bash: |
       set -o errexit -o pipefail
+      mv $(nrfjprogLinux.secureFilePath) nrfjprog.tar.gz
+      export LOCAL_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)/nrfjprog.tar.gz
+      export ENABLE_DRAFT_TEST=true
+      export NODE_PRE_GYP_GITHUB_TOKEN=$(WAYLAND_GITHUB_TOKEN)
       npm config set strict-ssl false
       npm config set //npm.nordicsemi.no/:_authToken $(WAYLAND_NPM_TOKEN_INTERNAL)
       npm config set registry https://npm.nordicsemi.no/
@@ -37,8 +34,8 @@ jobs:
       npm config set @types:registry https://registry.npmjs.org/
       npm config set string_decoder:registry https://registry.npmjs.org/
       npm config set glob:registry https://registry.npmjs.org/
-    condition: eq(variables['Release'], 'true')
-    displayName: 'Set up internal NPM registry'
+    condition: eq(variables['release'], 'true')
+    displayName: 'Setup environment'
   - bash: |
       set -o errexit -o pipefail
       npm i
