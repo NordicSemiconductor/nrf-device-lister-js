@@ -16,7 +16,7 @@ jobs:
     name: nrfjprogLinux
     inputs:
       secureFile: "nrfjprog-10.7.0-linux_x64.tar.gz"
-    condition: eq(variables['release'], 'true')
+    condition: eq(variables['INTERNAL'], 'true')
     displayName: 'Donwload internal nrfjprog for release'
   - bash: |
       set -o errexit -o pipefail
@@ -35,13 +35,13 @@ jobs:
       npm config set glob:registry https://registry.npmjs.org/
       npm i
       npm run rollup
-    condition: eq(variables['release'], 'true')
+    condition: eq(variables['INTERNAL'], 'true')
     displayName: 'Build with internal release'
   - bash: |
       set -o errexit -o pipefail
       npm i
       npm run rollup
-    condition: ne(variables['release'], 'true')
+    condition: ne(variables['INTERNAL'], 'true')
     displayName: 'Build'
   - bash: |
       set -o errexit -o pipefail
@@ -53,19 +53,3 @@ jobs:
     inputs:
       path: $(System.DefaultWorkingDirectory)/build/stage
     displayName: 'Publish artifacts'
-
-- job: Test
-  dependsOn: [
-    Build,
-  ]
-  pool: server
-  steps:
-  - task: InvokeRESTAPI@1
-    displayName: Test
-    inputs:
-      connectionType: 'connectedServiceName'
-      serviceConnection: 'waylandJenkins'
-      method: 'POST'
-      urlSuffix: 'view/test/job/nrf-device-lister-js-test/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
-      waitForCompletion: 'true'
-    condition: ne(variables['Build.Reason'], 'PullRequest')
