@@ -45,9 +45,9 @@ jobs:
     displayName: 'Build'
   - bash: |
       set -o errexit -o pipefail
-      mkdir dist
       npm pack
-      mv *.tgz dist
+      mkdir -p ./build/stage
+      mv *.tgz ./build/stage
     displayName: 'Pack and move package'
   - task: PublishPipelineArtifact@1
     inputs:
