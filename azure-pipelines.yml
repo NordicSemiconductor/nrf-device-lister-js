@@ -23,9 +23,10 @@ jobs:
       export LOCAL_NRFJPROG_PATH=$(nrfjprogLinux.secureFilePath)
       export ENABLE_DRAFT_TEST=true
       export NODE_PRE_GYP_GITHUB_TOKEN=$(WAYLAND_GITHUB_TOKEN)
-      npm config set strict-ssl false
+      cat .npmrc-internal >> .npmrc
       npm config set //npm.nordicsemi.no/:_authToken $(WAYLAND_NPM_TOKEN_INTERNAL)
-      npm config set pc-nrfjprog-js:registry https://npm.nordicsemi.no/
+      npm config ls -l
+      # npm config set strict-ssl false
       # npm config set registry https://npm.nordicsemi.no/
       # npm config set @babel:registry https://registry.npmjs.org/
       # npm config set @cnakazawa:registry https://registry.npmjs.org/
