@@ -53,11 +53,11 @@ class DeviceLister extends EventEmitter {
         // Caches
         this._currentDevices = new Map();
         this._currentErrors = new Set();
+        this._seenUsbAdresses = new Set();
 
         // State for throttling down reenumerations
         this._activeReenumeration = false; // Promise or false
         this._queuedReenumeration = false; // Boolean
-
 
         this._backends = [];
 
@@ -97,14 +97,15 @@ class DeviceLister extends EventEmitter {
         if (serialport) { this._backends.push(new SerialPortBackend()); }
         if (jlink) { this._backends.push(new JlinkBackend()); }
 
-        this._boundReenumerate = this._triggerReenumeration.bind(this);
+        this._boundOnAttach = this._onUsbAttach.bind(this);
+        this._boundOnDetach = this._onUsbDetach.bind(this);
     }
 
     start() {
         debug('Attaching event listeners for USB attach/detach');
 
-        Usb.on('attach', this._boundReenumerate);
-        Usb.on('detach', this._boundReenumerate);
+        Usb.on('attach', this._boundOnAttach);
+        Usb.on('detach', this._boundOnDetach);
 
         this._backends.forEach(backend => backend.start());
 
@@ -118,8 +119,8 @@ class DeviceLister extends EventEmitter {
 
         this._backends.forEach(backend => backend.stop());
 
-        Usb.removeListener('attach', this._boundReenumerate);
-        Usb.removeListener('detach', this._boundReenumerate);
+        Usb.removeListener('attach', this._boundOnAttach);
+        Usb.removeListener('detach', this._boundOnDetach);
     }
 
     static get devices() {
@@ -142,16 +143,36 @@ class DeviceLister extends EventEmitter {
             });
     }
 
+    _onUsbDetach(usbDevice) {
+        debug(`Called _triggerReenumeration because of detached USB device VID/PID 0x${
+            usbDevice.deviceDescriptor.idVendor.toString(16).padStart(4, '0')}/0x${
+            usbDevice.deviceDescriptor.idProduct.toString(16).padStart(4, '0')}`);
+
+        this._triggerReenumeration(usbDevice)
+    }
+
+    _onUsbAttach(usbDevice) {
+        debug(`Called _triggerReenumeration because of attached USB device VID/PID 0x${
+            usbDevice.deviceDescriptor.idVendor.toString(16).padStart(4, '0')}/0x${
+            usbDevice.deviceDescriptor.idProduct.toString(16).padStart(4, '0')}`);
+
+        const usbAddress = usbDevice.busNumber + '.' + usbDevice.deviceAddress;
+
+        if (this._seenUsbAdresses.has(usbAddress)) {
+            this.emit('error', new Error('A USB device has been given a USB address seen before; this might lead to problems. See https://github.com/NordicSemiconductor/pc-nrfconnect-core/blob/master/doc/repeated-usb-address-troubleshoot.md'));
+        } else {
+            this._seenUsbAdresses.add(usbAddress);
+        }
+
+        this._triggerReenumeration(usbDevice)
+    }
 
     // Called on the USB attach/detach events, throttles down calls to reenumerate()
     // Only one reenumeration will be active at any one time - if any reenumerations
     // are triggered by events when there is one already active, the first one
     // will be queued and delayed until the active one is finished, the rest
     // will be silently ignored.
-    _triggerReenumeration(usbDevice) {
-        debug(`Called _triggerReenumeration because of added/removed USB device VID/PID 0x${
-            usbDevice.deviceDescriptor.idVendor.toString(16).padStart(4, '0')}/0x${
-            usbDevice.deviceDescriptor.idProduct.toString(16).padStart(4, '0')}`);
+    _triggerReenumeration() {
 
         if (!this._activeReenumeration) {
             debug('Calling reenumerate().');
@@ -205,8 +226,18 @@ class DeviceLister extends EventEmitter {
                     device = Object.assign({}, device, fixedResult);
                     if (traits && !traits.includes(result.traits[0])) {
                         device.traits = result.traits.concat(traits);
+
+                        if (traits.indexOf('usb') !== -1) {
+                            // This just fills up this._seenUsbAdresses on the
+                            // first run, without needing to receive an
+                            // 'attach' event for the offending USB peripheral
+                            const usbAddress = device.usb.device.busNumber + '.' + device.usb.device.deviceAddress;
+                            this._seenUsbAdresses.add(usbAddress);
+                        }
                     }
                     deviceMap.set(serialNumber, device);
+
+
                 } else if (result.errorSource) {
                     if (!this._currentErrors.has(result.errorSource)) {
                         this.emit('error', result.error);
